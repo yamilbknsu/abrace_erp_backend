@@ -42,11 +42,15 @@ const MandatoSchema = mongoose.Schema({
             valoradm: Number,
             tipocontrato: String,
             valorcontrato: Number,
-            incluirhononadmin: Boolean
+            incluirhononadmin: Boolean,
+            impuestoadm: Number,
+            admimpuestoincluido: Boolean,
+            impuestocontrato: Number,
+            contratoimpuestoincluido: Boolean
         }
     },
     instrucciones:{
-        type: [{nombre: String, detalle:String}]
+        type: [{nombre: String, detalle:String, _id: mongoose.ObjectId}]
     },
     otrosdestinatarios:{
         type: [{rut: String,

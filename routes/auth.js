@@ -34,7 +34,7 @@ router.post('/register/', async (req, res) => {
 
     // Validation
     const validation = userValidationSchema.validate(req.body);
-    if (validation.error) res.send(validation.error);
+    if (validation.error) res.status(400).send(validation.error);
 
     // Check if username exists
     const userExists = await User.findOne({username: req.body.username});
@@ -69,18 +69,21 @@ router.post('/register/', async (req, res) => {
 router.post('/login/', async (req, res) =>{
     // Validation
     const validation = userValidationSchema.validate(req.body);
-    if (validation.error) return res.send(validation.error);
+    if (validation.error) return res.status(400)
+                        .send({"ok": false, "message": validation.error.message});
 
     // Check if username exists
     const user = await User.findOne({username: req.body.username});
-    if (!user) return res.status(400).send("Username doesn't exists");
+    if (!user) return res.status(400).send({"message": "Nombre o contraseña invalidos."});
 
     // Validate password
     const validPassword = await bcrypt.compare(req.body.password, user.pw_hash);
-    if (!validPassword) return res.status(400).send("Password incorrect");
+    if (!validPassword) return res.status(400).send({"message": "Nombre o contraseña invalidos."});
 
-    const token = jwt.sign({userid: user._id}, process.env.TOKEN_SECRET);
-    res.header('auth-token', token).send({message: 'Succesfully logged', userid: user._id, token});
+    const token = jwt.sign({userid: user._id}, process.env.TOKEN_SECRET, {"expiresIn": "10min"});
+    res.header('auth-token', token).send({message: 'Succesfully logged',
+        userid: user._id, username: user.username, displayname: user.displayname,
+        email: user.email, token, expiresIn: "600"});
 });
 
 

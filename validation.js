@@ -38,7 +38,7 @@ const caracteristicasValidationSchema = Joi.object().keys({
     estacionamientos: Joi.number(),
     ascensor: Joi.boolean(),
     bodegas: Joi.number(),
-    otros: Joi.string()
+    otros: Joi.string().allow('')
 });
 
 // Propiedad validation schema
@@ -47,23 +47,23 @@ const propiedadValidationSchema = Joi.object().keys({
     uId : Joi.string().min(3).required(),
     direccion: Joi.string().required(),
     telefonos: Joi.array().items(String),
-    rolsii: Joi.string(),
+    rolsii: Joi.string().allow(''),
     arrendada: Joi.boolean(),
-    administrador: Joi.string(),
+    administrador: Joi.string().allow('').allow(null),
     caracteristicas:caracteristicasValidationSchema,
     mandante: Joi.string().required(),
-    mandatoActual: Joi.string()
+    mandatoActual: Joi.string().allow('')
 });
 
 // Direccion validation schema
 const direccionValidationSchema = Joi.object().keys({
     userid: Joi.string().required(),
     calle: Joi.string().min(3).required(),
-    comuna: Joi.string(),
-    numero: Joi.string(),
-    depto: Joi.string(),
-    ciudad: Joi.string(),
-    region: Joi.string()
+    comuna: Joi.string().allow(''),
+    numero: Joi.string().allow(''),
+    depto: Joi.string().allow(''),
+    ciudad: Joi.string().allow(''),
+    region: Joi.string().allow('')
 });
 
 // Persona validation schema
@@ -72,11 +72,11 @@ const personaValidationSchema = Joi.object().keys({
     rut : Joi.string().required().min(7).max(13),
     dv: Joi.string().required().min(1).max(1),
     nombre: Joi.string().required().min(3),
-    actividad: Joi.string(),
-    empresa: Joi.string(),
-    cargo: Joi.string(),
-    dirParticular: Joi.string(),
-    dirComercial: Joi.string(),
+    actividad: Joi.string().allow('').allow(null),
+    empresa: Joi.string().allow('').allow(null),
+    cargo: Joi.string().allow('').allow(null),
+    dirParticular: Joi.string().allow('').allow(null),
+    dirComercial: Joi.string().allow('').allow(null),
     telefonos: Joi.array().items(String),
     emails: Joi.array().items(String)
 });
@@ -97,32 +97,38 @@ const mandatoValidationSchema = Joi.object().keys({
     firmacontrato: Joi.string(),
     enviocorresp: Joi.string(),
     liquidacion: Joi.object().keys({
-        formapago: Joi.string(),
-        cuenta: Joi.string(),
-        banco: Joi.string(),
-        pagoa: Joi.string()
+        formapago: Joi.string().allow(''),
+        cuenta: Joi.string().allow(''),
+        banco: Joi.string().allow(''),
+        pagoa: Joi.string().allow('')
     }),
     comisiones: Joi.object().keys({
-        tipoadm: Joi.string(),
-        valoradm: Joi.string(),
-        tipocontrato: Joi.string(),
-        valorcontrato: Joi.string(),
-        incluirhononadmin: Joi.bool()
+        tipoadm: Joi.string().allow(''),
+        valoradm: Joi.string().allow(''),
+        tipocontrato: Joi.string().allow(''),
+        valorcontrato: Joi.string().allow(''),
+        incluirhononadmin: Joi.bool().allow(''),
+        impuestoadm: Joi.string().allow(''),
+        admimpuestoincluido: Joi.bool().allow(''),
+        impuestocontrato: Joi.string().allow(''),
+        contratoimpuestoincluido: Joi.bool().allow(''),
     }),
     instrucciones: Joi.array().items(Joi.object().keys({
         nombre: Joi.string(),
-        detalle: Joi.string()
+        detalle: Joi.string().allow(''),
+        _id: Joi.string()
     })),
     otrosdestinatarios: Joi.array().items(Joi.object().keys({
-        rut: Joi.string(),
-        dv: Joi.string(),
-        nombre: Joi.string(),
-        moneda: Joi.string(),
-        tipocalculo: Joi.string(),
-        monto: Joi.string(),
-        formapago: Joi.string(),
-        nrocuenta: Joi.string(),
-        banco: Joi.string()
+        _id: Joi.string(),
+        rut: Joi.string().allow(''),
+        dv: Joi.string().allow(''),
+        nombre: Joi.string().allow(''),
+        moneda: Joi.string().allow(''),
+        tipocalculo: Joi.string().allow(''),
+        monto: Joi.number().allow(''),
+        formapago: Joi.string().allow(''),
+        nrocuenta: Joi.string().allow(''),
+        banco: Joi.string().allow('')
     }))
 });
 
@@ -132,8 +138,8 @@ const contratoValidationSchema = Joi.object().keys({
     propiedad: Joi.string().required(),
     estado: Joi.string().required(),
     fechacontrato: Joi.date().required(),
-    fechaTermino: Joi.date(),
-    primerreajuste: Joi.date(),
+    fechatermino: Joi.date(),
+    proximoreajuste: Joi.date(),
     tipocontrato: Joi.string(),
     moneda: Joi.string(),
     canoninicial: Joi.string(),
@@ -143,11 +149,16 @@ const contratoValidationSchema = Joi.object().keys({
     diavcto: Joi.string(),
     mesgarantia: Joi.string(),
     otras: Joi.string().allow('').optional(),
-    tipogarantia: Joi.string(),
-    banco: Joi.string(),
-    nrodcto: Joi.string(),
+    tipogarantia: Joi.string().allow(''),
+    banco: Joi.string().allow(''),
+    nrodcto: Joi.string().allow(''),
     arrendatario: Joi.string().required(),
-    aval: Joi.string()
+    aval: Joi.string(),
+    instrucciones: Joi.array().items(Joi.object().keys({
+        nombre: Joi.string(),
+        detalle: Joi.string().allow(''),
+        _id: Joi.string()
+    }))
 });
 
 

@@ -9,7 +9,8 @@ const ParametroSchema = mongoose.Schema({
         type: [{code: String, attributes: [String]}],
         required: true,
         default: [{code: 0, attributes: ['example-attr-1', 'example-attr-2']}]
-    }
+    },
+    userid: {type: mongoose.ObjectId, required: false}
 });
 
 module.exports = mongoose.model('Parametros', ParametroSchema);

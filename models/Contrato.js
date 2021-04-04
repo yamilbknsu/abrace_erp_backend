@@ -41,7 +41,8 @@ const ContratoSchema = mongoose.Schema({
         required: true
     },
     fechatermino: Date,
-    primerreajustse: Date,
+    fechafin: Date,
+    proximoreajuste: Date,
     tipocontrato: String,
     moneda: String,
     canoninicial: Number,
@@ -54,6 +55,9 @@ const ContratoSchema = mongoose.Schema({
     tipogarantia: String,
     banco: String,
     nrodcto: String,
+    instrucciones:{
+        type: [{nombre: String, detalle:String, _id: mongoose.ObjectId}]
+    },
     arrendatario: {
         type: mongoose.ObjectId,
         required: true},
