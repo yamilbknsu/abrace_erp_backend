@@ -130,8 +130,6 @@ router.post('/mandatos/', validateToken, permissionCheck, updateCleaner, async (
     if(!req.permissions.some(p => valid_permissions.includes(p))) 
         return res.status(403).send('Forbidden access - lacking permission to perform action');
 
-    console.log(req.body);
-
     // Validation
     const validation = mandatoValidationSchema.validate(req.body);
     if (validation.error) return res.status(400).send(validation.error);

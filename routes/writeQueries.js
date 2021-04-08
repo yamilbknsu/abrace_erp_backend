@@ -27,6 +27,7 @@ const {direccionValidationSchema,
        contratoValidationSchema,
        validateRUT} = require('../validation.js');
 const CierreMes = require('../models/CierreMes.js');
+const Liquidacion = require('../models/Liquidacion.js');
 
 // Write a contrato
 router.post('/contratos/', validateToken, permissionCheck, async (req, res) =>{
@@ -301,5 +302,23 @@ router.post('/pagos/', validateToken, permissionCheck, (req, res) =>{
     });
 });
 
+
+// Write a liquidacion
+router.post('/liquidaciones/', validateToken, permissionCheck, (req, res) =>{
+    
+    // Check if logged user has the permissions
+    valid_permissions = ['admin', 'write-all', 'write-boleta']
+    if(!req.permissions.some(p => valid_permissions.includes(p))) 
+        return res.status(403).send('Forbidden access - lacking permission to perform action');
+
+    console.log(req.body)
+    const new_liquidacion = Liquidacion(req.body);
+    new_liquidacion.save()
+                    .then(data => {
+                    res.json({dataid: data._id});
+                    }).catch(err => {
+                    res.json({message: err});
+                });
+});
 
 module.exports = router;
