@@ -8,6 +8,9 @@ const validateToken = (req, res, next) => {
         if (typeof token !== 'undefined'){
             const verified = jwt.verify(token, process.env.TOKEN_SECRET);
             req.verified = verified;
+            
+            res.setHeader('auth-token', jwt.sign({userid: req.verified.userid}, process.env.TOKEN_SECRET, {"expiresIn": "10min"}));
+
             next();
         }else{
             res.status(403).send('Forbidden access');
