@@ -43,7 +43,8 @@ router.post('/contratos/', validateToken, permissionCheck, async (req, res) =>{
     if (validation.error) return res.status(400).send(validation.error);
 
     // Check if contrato exists
-    const contrato = await Contrato.findOne({propiedad: req.body.propiedad,
+    const contrato = await Contrato.findOne({userid: req.verified.userid,
+                                             propiedad: req.body.propiedad,
                                              arrendatario: req.body.arrendatario,
                                              fechaInicio: req.body.fechacontrato});
                                              
@@ -72,7 +73,8 @@ router.post('/mandatos/', validateToken, permissionCheck, async (req, res) =>{
     if (validation.error) return res.status(400).send(validation.error);
 
     // Check if mandato exists
-    const mandato = await Mandato.findOne({propiedad: req.body.propiedad,
+    const mandato = await Mandato.findOne({userid: req.verified.userid,
+                                           propiedad: req.body.propiedad,
                                            fechaInicio: req.body.fechaInicio});
     if (mandato) return res.status(400).send("Mandato already registered");
     
@@ -99,7 +101,7 @@ router.post('/propiedades/', validateToken, permissionCheck, updateCleaner, asyn
     if (validation.error) return res.status(400).send(validation.error);
 
     // Check if uId exists
-    const propiedad = await Propiedad.findOne({uId: req.body.uId});
+    const propiedad = await Propiedad.findOne({userid: req.verified.userid, uId: req.body.uId});
     if (propiedad) return res.status(400).send("Propiedad already registered");
 
     if(req.body.administrador == '') req.body.administrador = null;
@@ -125,7 +127,7 @@ router.post('/mandantes/', validateToken, permissionCheck, async (req, res) =>{
     if (validation.error) return res.status(400).send(validation.error);
 
     // Check if rut exists
-    const mandante = await Mandante.findOne({personaID: req.body.personaID});
+    const mandante = await Mandante.findOne({userid: req.verified.userid, personaID: req.body.personaID});
     if (mandante) return res.status(400).send("Persona already registered as a mandante");
 
     const new_mandate = Mandante(req.body);
@@ -151,7 +153,7 @@ router.post('/personas/', validateToken, permissionCheck, updateCleaner, async (
     if (!validateRUT(req.body.rut, req.body.dv)) return res.status(400).send('Rut invalido');
 
     // Check if rut exists
-    const persona = await Persona.findOne({rut: req.body.rut});
+    const persona = await Persona.findOne({userid: req.verified.userid, rut: req.body.rut});
     if (persona) return res.status(400).send("Rut already exists");
 
     console.log(req.body)

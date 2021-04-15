@@ -21,6 +21,11 @@ const userValidationSchema = Joi.object().keys({
 // General get query
 // We include the validateToken middleware
 router.get('/', validateToken, async (req, res) => {
+    // Check if logged user has the permissions
+    valid_permissions = ['admin']
+    if(!req.permissions.some(p => valid_permissions.includes(p))) 
+        return res.status(403).send('Forbidden access - lacking permission to perform action');
+        
     try{
         console.log(req.verified);
         const users = await User.find();
