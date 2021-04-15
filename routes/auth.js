@@ -9,6 +9,7 @@ const User = require('../models/User');
 
 // Validate token import
 const validateToken = require('../validateToken.js');
+const permissionCheck = require('../permissionChecking.js');        // We get req.permissions
 
 // Valdiation Schemas
 const userValidationSchema = Joi.object().keys({
@@ -30,7 +31,11 @@ router.get('/', validateToken, async (req, res) => {
 });
 
 // Registering a new user
-router.post('/register/', async (req, res) => {
+router.post('/register/', validateToken, permissionCheck, async (req, res) => {
+    // Check if logged user has the permissions
+    valid_permissions = ['admin']
+    if(!req.permissions.some(p => valid_permissions.includes(p))) 
+        return res.status(403).send('Forbidden access - lacking permission to perform action');
 
     // Validation
     const validation = userValidationSchema.validate(req.body);
@@ -90,19 +95,20 @@ router.post('/login/', async (req, res) =>{
 
 // Create a test user
 router.post('/createTestUser', (req, res) => {
-    const new_user = User({
-        username: 'test_user',
-        pw_hash: 'myTestPassword',
-        displayname: 'Test User',
-        email: 'asdasdas@test.com'
-    });
-
-    new_user.save()
-            .then(data => {
-                res.json(data);
-            }).catch(err => {
-                res.json({message: err});
-            });
+    //const new_user = User({
+    //    username: 'test_user',
+    //    pw_hash: 'myTestPassword',
+    //    displayname: 'Test User',
+    //    email: 'asdasdas@test.com'
+    //});
+//
+    //new_user.save()
+    //        .then(data => {
+    //            res.json(data);
+    //        }).catch(err => {
+    //            res.json({message: err});
+    //        });
+    res.send('Ok champ.')
 });
 
 module.exports = router;
