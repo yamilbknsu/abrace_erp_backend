@@ -15,6 +15,9 @@ const Propiedad = require('../models/Propiedad.js');
 const Mandato = require('../models/Mandato.js');
 const Contrato = require('../models/Contrato.js');
 const Boleta = require('../models/Boleta.js');
+const Ingreso = require('../models/Ingreso.js');
+const Egreso = require('../models/Egreso.js');
+const ReajusteExtraordinario = require('../models/ReajusteExtraordinario.js');
 
 
 // Delete propiedad
@@ -136,5 +139,66 @@ router.delete('/boletas/', validateToken, permissionCheck, async (req, res) =>{
         res.json({message: error});
     });
 });
+
+// Delete ingresos
+router.delete('/ingresos/', validateToken, permissionCheck, async (req, res) =>{
+    // Check if logged user has the permissions
+    valid_permissions = ['admin', 'delete-all', 'delete-contrato']
+    if(!req.permissions.some(p => valid_permissions.includes(p))) 
+        return res.status(403).send('Forbidden access - lacking permission to perform action');
+
+    // Check if propiedad exists
+    const ingreso = await Ingreso.findOne({_id: req.query.id});
+    if (!ingreso) return res.status(400).send("Ingreso not registered");
+
+    // Delete first document that matches 
+    // the condition
+    Ingreso.deleteOne({ _id: { $eq: req.query.id } }).then(function(){ 
+        res.json("Data deleted");
+    }).catch(function(error){ 
+        res.json({message: error});
+    });
+});
+
+// Delete egresos
+router.delete('/egresos/', validateToken, permissionCheck, async (req, res) =>{
+    // Check if logged user has the permissions
+    valid_permissions = ['admin', 'delete-all', 'delete-contrato']
+    if(!req.permissions.some(p => valid_permissions.includes(p))) 
+        return res.status(403).send('Forbidden access - lacking permission to perform action');
+
+    // Check if propiedad exists
+    const egreso = await Egreso.findOne({_id: req.query.id});
+    if (!egreso) return res.status(400).send("Ingreso not registered");
+
+    // Delete first document that matches 
+    // the condition
+    Egreso.deleteOne({ _id: { $eq: req.query.id } }).then(function(){ 
+        res.json("Data deleted");
+    }).catch(function(error){ 
+        res.json({message: error});
+    });
+});
+
+// Delete reajustesextraordinarios
+router.delete('/reajustesextraordinarios/', validateToken, permissionCheck, async (req, res) =>{
+    // Check if logged user has the permissions
+    valid_permissions = ['admin', 'delete-all', 'delete-contrato']
+    if(!req.permissions.some(p => valid_permissions.includes(p))) 
+        return res.status(403).send('Forbidden access - lacking permission to perform action');
+
+    // Check if propiedad exists
+    const reajustesextraordinarios = await ReajusteExtraordinario.findOne({_id: req.query.id});
+    if (!reajustesextraordinarios) return res.status(400).send("Ingreso not registered");
+
+    // Delete first document that matches 
+    // the condition
+    ReajusteExtraordinario.deleteOne({ _id: { $eq: req.query.id } }).then(function(){ 
+        res.json("Data deleted");
+    }).catch(function(error){ 
+        res.json({message: error});
+    });
+});
+
 
 module.exports = router;

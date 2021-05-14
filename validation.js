@@ -38,7 +38,7 @@ const caracteristicasValidationSchema = Joi.object().keys({
     estacionamientos: Joi.number(),
     ascensor: Joi.boolean(),
     bodegas: Joi.number(),
-    otros: Joi.string().allow('')
+    otros: Joi.array().allow(null).empty()
 });
 
 // Propiedad validation schema
@@ -78,7 +78,9 @@ const personaValidationSchema = Joi.object().keys({
     dirParticular: Joi.string().allow('').allow(null),
     dirComercial: Joi.string().allow('').allow(null),
     telefonos: Joi.array().items(String),
-    emails: Joi.array().items(String)
+    emails: Joi.array().items(String),
+    personalidad: Joi.string().allow('').allow(null),
+    representante: Joi.object().allow(null)
 });
 
 // Mandante validation schema

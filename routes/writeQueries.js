@@ -28,6 +28,10 @@ const {direccionValidationSchema,
        validateRUT} = require('../validation.js');
 const CierreMes = require('../models/CierreMes.js');
 const Liquidacion = require('../models/Liquidacion.js');
+const Egreso = require('../models/Egreso.js');
+const Ingreso = require('../models/Ingreso.js');
+const ReajusteRentas = require('../models/ReajusteRentas.js');
+const ReajusteExtraordinario = require('../models/ReajusteExtraordinario.js');
 
 // Write a contrato
 router.post('/contratos/', validateToken, permissionCheck, async (req, res) =>{
@@ -278,6 +282,97 @@ router.post('/cierresmes/', validateToken, permissionCheck, async (req, res) =>{
     });
 });
 
+// reajustesmes
+router.post('/reajustesmes/', validateToken, permissionCheck, async (req, res) =>{
+    
+    // Check if logged user has the permissions
+    valid_permissions = ['admin', 'write-all', 'write-boleta']
+    if(!req.permissions.some(p => valid_permissions.includes(p))) 
+        return res.status(403).send('Forbidden access - lacking permission to perform action');
+
+    const reajustes = req.body.reajustes.reajustes;
+    const reajustesextraordinarios = req.body.reajustes.reajustesExtraordinarios;
+    
+    var promises = [];
+
+    reajustes.forEach(async element => {
+        if(element.reajuste != 0){
+            var new_reajuste = Reajuste(element);
+            promises.push(new_reajuste.save());
+        }
+
+        var contrato = await Contrato.findOne({_id: element.contrato});
+        contrato.canonactual = element.valorfinal;
+        
+        var reajuste_interval = 1;
+        if(contrato.tiemporeajuste == 'Mensual') reajuste_interval = 1;
+        else if(contrato.tiemporeajuste == 'Trimestral') reajuste_interval = 3;
+        else if(contrato.tiemporeajuste == 'Semestral') reajuste_interval = 6;
+        else if(contrato.tiemporeajuste == 'Anual') reajuste_interval = 12;
+
+        contrato.proximoreajuste = new Date(new Date(req.query.fecha).setMonth(new Date(req.query.fecha).getMonth() + reajuste_interval)).setDate(new Date(contrato.proximoreajuste).getDate());
+        
+        Contrato.findByIdAndUpdate(element.contrato, contrato, (err, model) => {
+            if(err){
+                console.log(err)
+            }
+            else{
+                console.log(model)
+            }
+        })
+    });
+
+    reajustesextraordinarios.forEach(async element => {
+        console.log(element)
+        if(element.reajuste != 0){
+            var new_reajuste = Reajuste(element);
+            promises.push(new_reajuste.save());
+        }
+
+        var contrato = await Contrato.findOne({_id: element.contrato});
+        contrato.canonactual = element.valorfinal;
+        
+        //var reajuste_interval = 1;
+        //if(contrato.tiemporeajuste == 'Mensual') reajuste_interval = 1;
+        //else if(contrato.tiemporeajuste == 'Trimestral') reajuste_interval = 3;
+        //else if(contrato.tiemporeajuste == 'Semestral') reajuste_interval = 6;
+        //else if(contrato.tiemporeajuste == 'Anual') reajuste_interval = 12;
+        //contrato.proximoreajuste = new Date(new Date(req.query.fecha).setMonth(new Date(req.query.fecha).getMonth() + reajuste_interval)).setDate(new Date(contrato.proximoreajuste).getDate());
+        
+        Contrato.findByIdAndUpdate(element.contrato, contrato, (err, model) => {
+            if(err){
+                console.log(err)
+            }
+            else{
+                console.log(model)
+            }
+        })
+    });
+
+    var mes_reajustes = [];
+
+    Promise.all(promises).then(values => {
+        values.forEach(element => {
+            if(element.reajuste != undefined){
+                mes_reajustes.push(element._id)
+            }
+        });
+
+        const new_reajuste_rentas = ReajusteRentas({
+            fecha: req.query.fecha,
+            userid: req.body.userid,
+            reajustes: mes_reajustes
+        });
+        new_reajuste_rentas.save()
+                    .then(data => {
+                        res.json(data);
+                    }).catch(err => {
+                        res.json({message: err});
+                    });
+    });
+    
+});
+
 // Write a pago
 router.post('/pagos/', validateToken, permissionCheck, (req, res) =>{
     
@@ -286,22 +381,22 @@ router.post('/pagos/', validateToken, permissionCheck, (req, res) =>{
     if(!req.permissions.some(p => valid_permissions.includes(p))) 
         return res.status(403).send('Forbidden access - lacking permission to perform action');
     
-    var boletasPromises = [];
-    req.body.cargos.forEach(cargo => {
-        if(cargo.tipo == 'Arriendo'){
-            boletasPromises.push(Boleta.updateOne({ "_id" : mongoose.Types.ObjectId(cargo.concepto)}, { $set: { "estado" : "Emitido" } }));
-        }
-    });
+    //var boletasPromises = [];
+    //req.body.cargos.forEach(cargo => {
+    //    if(cargo.tipo == 'Arriendo'){
+    //        boletasPromises.push(Boleta.updateOne({ "_id" : mongoose.Types.ObjectId(cargo.concepto)}, { $set: { "estado" : "Emitido" } }));
+    //    }
+    //});
 
-    Promise.all(boletasPromises).then(values =>{
-        const new_pago = Pago(req.body);
+    const new_pago = Pago(req.body);
         new_pago.save()
                 .then(data => res.json(data))
                 .catch(err => {
                     res.json({message: err});
                 });
 
-    });
+    //Promise.all(boletasPromises).then(values =>{
+    //});
 });
 
 
@@ -313,9 +408,59 @@ router.post('/liquidaciones/', validateToken, permissionCheck, (req, res) =>{
     if(!req.permissions.some(p => valid_permissions.includes(p))) 
         return res.status(403).send('Forbidden access - lacking permission to perform action');
 
-    console.log(req.body)
     const new_liquidacion = Liquidacion(req.body);
     new_liquidacion.save()
+                    .then(data => {
+                    res.json({dataid: data._id});
+                    }).catch(err => {
+                    res.json({message: err});
+                });
+});
+
+// Write a egreso
+router.post('/egresos/', validateToken, permissionCheck, (req, res) =>{
+    
+    // Check if logged user has the permissions
+    valid_permissions = ['admin', 'write-all', 'write-boleta']
+    if(!req.permissions.some(p => valid_permissions.includes(p))) 
+        return res.status(403).send('Forbidden access - lacking permission to perform action');
+
+    const new_egreso = Egreso(req.body);
+    new_egreso.save()
+                    .then(data => {
+                    res.json({dataid: data._id});
+                    }).catch(err => {
+                    res.json({message: err});
+                });
+});
+
+// Write a ingreso
+router.post('/ingresos/', validateToken, permissionCheck, (req, res) =>{
+    
+    // Check if logged user has the permissions
+    valid_permissions = ['admin', 'write-all', 'write-boleta']
+    if(!req.permissions.some(p => valid_permissions.includes(p))) 
+        return res.status(403).send('Forbidden access - lacking permission to perform action');
+
+    const new_ingreso = Ingreso(req.body);
+    new_ingreso.save()
+                    .then(data => {
+                    res.json({dataid: data._id});
+                    }).catch(err => {
+                    res.json({message: err});
+                });
+});
+
+// Write a reajuste extraordinario
+router.post('/reajustesextraordinarios/', validateToken, permissionCheck, (req, res) =>{
+    
+    // Check if logged user has the permissions
+    valid_permissions = ['admin', 'write-all', 'write-mandato']
+    if(!req.permissions.some(p => valid_permissions.includes(p))) 
+        return res.status(403).send('Forbidden access - lacking permission to perform action');
+
+    const reajustesextraordinario = ReajusteExtraordinario(req.body);
+    reajustesextraordinario.save()
                     .then(data => {
                     res.json({dataid: data._id});
                     }).catch(err => {

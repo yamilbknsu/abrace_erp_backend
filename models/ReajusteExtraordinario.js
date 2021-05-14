@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const ReajusteSchema = mongoose.Schema({
+const ReajusteExtraordinarioSchema = mongoose.Schema({
     fecha: {
         type: Date,
         default: Date.now
@@ -27,11 +27,11 @@ const ReajusteSchema = mongoose.Schema({
         default: 0,
         required: true
     },
-    tipo:{
+    tipo: {
         type: String,
-        default: 'Automatico',
-        required: true
+        required: true,
+        default: 'Absoluto'
     }
 });
 
-module.exports = mongoose.model('Reajustes', ReajusteSchema);
+module.exports = mongoose.model('reajustesextraordinarios', ReajusteExtraordinarioSchema);

@@ -47,7 +47,7 @@ const PropiedadSchema = mongoose.Schema({
             estacionamientos: Number,
             ascensor: Boolean,
             bodegas: Number,
-            otros: String
+            otros: [{nombre: String, detalle: String}]
         }
     },
     mandante: {

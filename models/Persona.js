@@ -42,7 +42,34 @@ const PersonaSchema = mongoose.Schema({
     dirParticular: mongoose.ObjectId,
     dirComercial: mongoose.ObjectId,
     telefonos: [String],
-    emails: [String]    
+    emails: [String],
+    personalidad: String,
+    representante: {type: {
+        rut : {
+            type: String,
+            required: true,
+            min: 7,
+            max: 13
+        },
+        dv: {
+            type: String,
+            required: true,
+            min: 1,
+            max: 1
+        },
+        nombre: {
+            type: String,
+            required: true,
+            min: 3
+        },
+        actividad: String,
+        empresa: String,
+        cargo: String,
+        dirParticular: mongoose.ObjectId,
+        dirComercial: mongoose.ObjectId,
+        telefonos: [String],
+        emails: [String]
+    }}
 });
 
 module.exports = mongoose.model('Personas', PersonaSchema);

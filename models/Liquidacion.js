@@ -9,17 +9,21 @@ const LiquidacionSchema = mongoose.Schema({
         type: Date,
         default: Date.now
     },
+    fechapago:{
+        type: Date,
+        default: Date.now
+    },
     propiedad:{
         type: mongoose.ObjectId,
         required: true
     },
     cargos:{
-        type: [{concepto: String, valor: Number}],
+        type: [{tipo: String, concepto: String, detalle: String, valor: Number}],
         required: true,
         default: []
     },
     abonos:{
-        type: [{concepto: String, valor: Number}],
+        type: [{tipo: String, concepto: String, detalle: String, valor: Number}],
         required: true,
         default: []
     },
@@ -29,7 +33,9 @@ const LiquidacionSchema = mongoose.Schema({
     banco: String,
     totalCargos: Number,
     totalAbonos: Number,
-    subtotal: Number
+    subtotal: Number,
+    nroliquidacion: Number,
+    observaciones: String
 });
 
 module.exports = mongoose.model('liquidaciones', LiquidacionSchema);

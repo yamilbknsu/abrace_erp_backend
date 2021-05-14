@@ -38,7 +38,9 @@ const PagoSchema = mongoose.Schema({
     bancoen: String,
     totalCargos: Number,
     totalDescuentos: Number,
-    subtotal: Number
+    subtotal: Number,
+    nropago: Number,
+    observaciones: String
 });
 
 module.exports = mongoose.model('pagos', PagoSchema);
