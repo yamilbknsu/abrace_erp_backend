@@ -497,7 +497,7 @@ router.get('/infliquidacion/', validateToken, permissionCheck, async (req, res) 
     if(!req.permissions.some(p => valid_permissions.includes(p))) 
         return res.status(403).send('Forbidden access - lacking permission to perform action');
 
-    var {fecha, propiedad, ...queryClean} = req.query;
+    var {fecha, fechastart, fechaend, propiedad, ...queryClean} = req.query;
     req.query = queryClean;
 
     try{
@@ -551,6 +551,16 @@ router.get('/infliquidacion/', validateToken, permissionCheck, async (req, res) 
                 
                 return prop;
             });
+            
+        if(fechastart && fechaend)
+        liquidaciones = liquidaciones.map(prop => {
+            prop.liquidaciones = prop.liquidaciones.sort(sortDateReverse)
+            ultimo = prop.liquidaciones[0]
+            prop.liquidaciones = prop.liquidaciones.filter(liq => new Date(fechastart) <= new Date(liq.fecha) && new Date(fechaend) >= new Date(liq.fecha))
+            prop.liquidaciones = prop.liquidaciones.length == 0 ? (ultimo ? [ultimo] : []) : prop.liquidaciones
+            
+            return prop;
+        });
         res.json(liquidaciones);
     }catch(err){
         res.json({message: err});
