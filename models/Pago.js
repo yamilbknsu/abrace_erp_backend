@@ -31,6 +31,16 @@ const PagoSchema = mongoose.Schema({
         required: true,
         default: []
     },
+    saldoanterior:{
+        type: Number,
+        required: false,
+        default: 0
+    },
+    pagado:{
+        type: Number,
+        required: false,
+        default: 0
+    },
     formapago: String,
     documento: String,
     banco: String,

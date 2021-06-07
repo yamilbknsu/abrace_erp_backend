@@ -27,6 +27,16 @@ const LiquidacionSchema = mongoose.Schema({
         required: true,
         default: []
     },
+    saldoanterior:{
+        type: Number,
+        required: false,
+        default: 0
+    },
+    pagado:{
+        type: Number,
+        required: false,
+        default: 0
+    },
     honorarios: {type: {tipo: String, valor: Number, impuestos: Number, descripcion: String}},
     formapago: String,
     documento: String,

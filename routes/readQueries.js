@@ -16,6 +16,7 @@ const Contrato = require('../models/Contrato.js');
 const Parametro = require('../models/Parametro.js');
 const Boleta = require('../models/Boleta.js');
 const Liquidacion = require('../models/Liquidacion.js');
+const Pago = require('../models/Pago.js');
 const Ingreso = require('../models/Ingreso.js');
 const Egreso = require('../models/Egreso.js');
 const CierreMes = require('../models/CierreMes.js');
@@ -25,6 +26,18 @@ const ReajusteExtraordinario = require('../models/ReajusteExtraordinario.js');
 
 sortDate = (a, b) => (new Date(a.fecha) > new Date(b.fecha)) ? -1 : 1;
 sortDateReverse = (a, b) => (new Date(a.fecha) > new Date(b.fecha)) ? 1 : -1;
+matchPeriodo = (a,b) => (new Date(a)).getMonth() == (new Date(b)).getMonth() && (new Date(a)).getFullYear() == (new Date(b)).getFullYear()
+checkContratoPeriodo = function(con, periodo){
+    var inicio = new Date(con.fechacontrato);
+    var firstDayInicio = new Date(inicio.getFullYear(), inicio.getMonth(), 1);
+
+    var termino = con.fechatermino ? new Date(con.fechatermino) : undefined;
+    var lastDayTermino; 
+    if(termino)
+        lastDayTermino = new Date(termino.getFullYear(), termino.getMonth() + 1, 0);
+
+    return firstDayInicio <= new Date(periodo) && (!termino || lastDayTermino >= new Date(periodo)) 
+}
 
 // Read propiedades
 router.get('/propiedades/', validateToken, permissionCheck, async (req, res) =>{
@@ -305,17 +318,28 @@ router.get('/infreajustes/', validateToken, permissionCheck, async (req, res) =>
     if(!req.permissions.some(p => valid_permissions.includes(p))) 
         return res.status(403).send('Forbidden access - lacking permission to perform action');
     
+    var {periodo, propiedad, contrato, ...queryClean} = req.query;
+    req.query = queryClean;  
+
     try{
-        const reajustes = await Reajuste.aggregate([
+        var reajustes = await Reajuste.aggregate([
             {"$match" : {...{userid: ObjectId(req.verified.userid)}, ...req.query}},
             {"$lookup": {from: 'contratos', localField: 'contrato', foreignField: '_id', as: 'contrato'}},
-            {"$unwind": {path: "$contrato", preserveNullAndEmptyArrays: true}},
+            {"$unwind": {path: "$contrato", preserveNullAndEmptyArrays: false}},
             {"$lookup": {from: 'propiedades', localField: 'contrato.propiedad', foreignField: '_id', as: 'propiedad'}},
-            {"$unwind": {path: "$propiedad", preserveNullAndEmptyArrays: true}},
+            {"$unwind": {path: "$propiedad", preserveNullAndEmptyArrays: false}},
             {"$lookup": {from: 'direcciones', localField: 'propiedad.direccion', foreignField: '_id', as: 'propiedad.direccionData'}},
             {"$unwind": {path: "$propiedad.direccionData", preserveNullAndEmptyArrays: true}},
-
         ]);
+
+        //console.log(periodo)
+        if(periodo)
+            reajustes = reajustes.filter(reaj => matchPeriodo(reaj.fecha, periodo))
+        if(propiedad)
+            reajustes = reajustes.filter(reaj => reaj.propiedad._id == propiedad)
+        if(contrato)
+            reajustes = reajustes.filter(reaj => reaj.contrato._id == contrato)
+
         res.json(reajustes);
     }catch(err){
         res.json({message: err});
@@ -346,7 +370,17 @@ router.get('/pagopropiedades/', validateToken, permissionCheck, async (req, res)
             {"$unwind": {path: "$direccionData", preserveNullAndEmptyArrays: true}},
             {"$group": {_id: "$_id", uId: {"$first": "$uId"}, userid: {"$first": "$userid"}, direccionData: {"$first": "$direccionData"}, contratos: {"$addToSet": "$contrato"}}}
         ]);
-        
+
+        var reajustes = await Reajuste.aggregate([
+            {"$match" : {...{userid: ObjectId(req.verified.userid)}, ...req.query}},
+            {"$lookup": {from: 'contratos', localField: 'contrato', foreignField: '_id', as: 'contrato'}},
+            {"$unwind": {path: "$contrato", preserveNullAndEmptyArrays: true}},
+            {"$lookup": {from: 'propiedades', localField: 'contrato.propiedad', foreignField: '_id', as: 'propiedad'}},
+            {"$unwind": {path: "$propiedad", preserveNullAndEmptyArrays: true}},
+            {"$lookup": {from: 'direcciones', localField: 'propiedad.direccion', foreignField: '_id', as: 'propiedad.direccionData'}},
+            {"$unwind": {path: "$propiedad.direccionData", preserveNullAndEmptyArrays: true}},
+
+        ]);        
         
         sortDatePago = (a, b) => (new Date(a.fechaemision) > new Date(b.fechaemision)) ? -1 : 1;
         propiedades = propiedades.map(prop => {
@@ -366,6 +400,8 @@ router.get('/pagopropiedades/', validateToken, permissionCheck, async (req, res)
                 //contrato.boletas = contrato.boletas.sort(sortDate);
                 return contrato
             });
+            
+            prop.reajustes = reajustes.filter(reaj => reaj.propiedad._id.toString() == prop._id.toString()).filter(reaj => matchPeriodo(reaj.fecha, periodo))
             return prop
         });
 
@@ -373,7 +409,6 @@ router.get('/pagopropiedades/', validateToken, permissionCheck, async (req, res)
             propiedades = propiedades.filter(prop => prop._id == propiedad)
             if(contrato)
                 propiedades[0].contratos = propiedades[0].contratos.filter(cont => cont._id == contrato)
-
         }
         
         res.json(propiedades);
@@ -389,8 +424,11 @@ router.get('/infpago/', validateToken, permissionCheck, async (req, res) =>{
     if(!req.permissions.some(p => valid_permissions.includes(p))) 
         return res.status(403).send('Forbidden access - lacking permission to perform action');
     
+    var {fecha, fechastart, fechaend, propiedad, ...queryClean} = req.query;
+    req.query = queryClean;
+    
     try{
-        const propiedades = await Propiedad.aggregate([
+        var propiedades = await Propiedad.aggregate([
             {"$match" : {...{userid: ObjectId(req.verified.userid)}, ...req.query}},
             {"$lookup": {from: 'contratos', localField: '_id', foreignField: 'propiedad', as: 'contrato'}},
             {"$unwind": {path: "$contrato", preserveNullAndEmptyArrays: false}},
@@ -405,6 +443,21 @@ router.get('/infpago/', validateToken, permissionCheck, async (req, res) =>{
             {"$group": {_id: "$_id", uId: {"$first": "$uId"}, userid: {"$first": "$userid"}, direccionData: {"$first": "$direccionData"},
                         mandanteData: {"$first": "$mandanteData"}, contratos: {"$addToSet": "$contrato"}}}
         ]);
+
+        if(propiedad)
+            propiedades = propiedades.filter(prop => prop._id == propiedad)
+        
+        if(fechastart && fechaend)
+            propiedades = propiedades.map(prop => {
+                prop.pagos = prop.contratos.map(c => c.pagos).flat()
+                prop.pagos = prop.pagos.sort((a, b) => (new Date(a.fechaemision) > new Date(b.fechaemision)) ? 1 : -1)
+                ultimo = prop.pagos[0]
+                prop.pagos = prop.pagos.filter(liq => new Date(fechastart) <= new Date(liq.fechaemision) && new Date(fechaend) >= new Date(liq.fechaemision))
+                //prop.liquidaciones = prop.liquidaciones.length == 0 ? (ultimo ? [ultimo] : []) : prop.liquidaciones
+                
+                prop.contratos = prop.contratos.map(contrato => { contrato.pagos = []; return contrato})
+                return prop;
+            });
 
         res.json(propiedades);
     }catch(err){
@@ -508,7 +561,7 @@ router.get('/infliquidacion/', validateToken, permissionCheck, async (req, res) 
             {"$unwind": {path: "$mandato", preserveNullAndEmptyArrays: false}},
             {"$lookup": { from: 'personas', localField: 'mandante', foreignField: '_id', as: 'mandanteData'}},
             {"$unwind": {path: "$mandanteData", preserveNullAndEmptyArrays: false}},
-            {"$match":  {"$or" : [{"mandato.fechaTermino": {$eq: null}}, {"mandato.fechaTermino": {$eq: ""}}, {"mandato.fechaTermino": {$gte: new Date()}}]}},
+            {"$match":  {"$or" : [{"mandato.fechaTermino": {$eq: null}}, {"mandato.fechaTermino": {$eq: ""}}, {"mandato.fechaTermino": {$gte: new Date(fecha) || new Date()}}]}},
             {"$lookup": {from: 'direcciones', localField: 'direccion', foreignField: '_id', as: 'direccionData'}},
             {"$unwind": {path: "$direccionData", preserveNullAndEmptyArrays: true}},
             {"$lookup":{
@@ -617,7 +670,7 @@ router.get('/reajusterentas/', validateToken, permissionCheck, async (req, res) 
             {"$lookup": {from: 'contratos', localField: 'reajusteData.contrato', foreignField: '_id', as: 'reajusteData.contratoData'}},
             {"$unwind": {path: "$reajusteData.contratoData", preserveNullAndEmptyArrays: true}},
             {"$lookup": {from: 'propiedades', localField: 'reajusteData.contratoData.propiedad', foreignField: '_id', as: 'reajusteData.propiedadData'}},
-            {"$unwind": {path: "$reajusteData.propiedadData", preserveNullAndEmptyArrays: true}},
+            {"$unwind": {path: "$reajusteData.propiedadData", preserveNullAndEmptyArrays: false}},
             {"$lookup": {from: 'direcciones', localField: 'reajusteData.propiedadData.direccion', foreignField: '_id', as: 'reajusteData.propiedadData.direccionData'}},
             {"$unwind": {path: "$reajusteData.propiedadData.direccionData", preserveNullAndEmptyArrays: true}},
             {"$group": {_id: "$_id", userid: {"$first": "$userid"}, fecha: {"$first": "$fecha"}, reajustes: {"$addToSet": "$reajusteData"}}}
@@ -651,7 +704,7 @@ router.get('/reajustesextraordinarios/', validateToken, permissionCheck, async (
             {"$lookup": {from: 'contratos', localField: 'contrato', foreignField: '_id', as: 'contratoData'}},
             {'$unwind': {path: "$contratoData", preserveNullAndEmptyArrays: true}},
             {"$lookup": {from: 'propiedades', localField: 'contratoData.propiedad', foreignField: '_id', as: 'propiedadData'}},
-            {'$unwind': {path: "$propiedadData", preserveNullAndEmptyArrays: true}},
+            {'$unwind': {path: "$propiedadData", preserveNullAndEmptyArrays: false}},
             {"$lookup": {from: 'direcciones', localField: 'propiedadData.direccion', foreignField: '_id', as: 'propiedadData.direccionData'}},
             {'$unwind': {path: "$propiedadData.direccionData", preserveNullAndEmptyArrays: true}}]);
 
@@ -750,11 +803,119 @@ router.get('/fechasliqpagos/', validateToken, permissionCheck, async (req, res) 
             liquidaciones = liquidaciones.filter(liq => liq._id == propiedad).map(liq => [...liq.liquidaciones.map(l => l.fecha)])
             liquidaciones = liquidaciones.length > 0 ? liquidaciones[0] : [];
 
-            pagos = pagos.filter(liq => liq._id == propiedad).map(cont => cont.contratos[0].pagos.map(pago => pago.fechaemision))
+            pagos = pagos.filter(liq => liq._id == propiedad).map(cont => cont.contratos.map(c => c.pagos.map(pago => pago.fechaemision)).flat())
             pagos = pagos.length > 0 ? pagos[0] : [];
         }
         reajusterentas = reajusterentas.map(reaj => reaj.fecha)
         res.json({liquidaciones, pagos, reajusterentas});
+    }catch(err){
+        res.json({message: err});
+    }
+});
+
+// Read egresos
+router.get('/estadopagos/', validateToken, permissionCheck, async (req, res) =>{
+    // Check if logged user has the permissions
+    valid_permissions = ['admin', 'read-all', 'read-mandato']
+    if(!req.permissions.some(p => valid_permissions.includes(p))) 
+        return res.status(403).send('Forbidden access - lacking permission to perform action');
+
+    var { periodo, ...queryClean} = req.query;
+    req.query = queryClean;
+
+    try{
+        var propiedades = await Propiedad.aggregate([
+            {"$match" : {...{userid: ObjectId(req.verified.userid)}, ...req.query}},
+            {"$lookup": {from: 'liquidaciones', localField: '_id', foreignField: 'propiedad', as: 'liquidaciones'}},
+            {"$lookup": { from: 'mandatos', localField: '_id', foreignField: 'propiedad', as: 'mandato'}},
+            {"$unwind": {path: "$mandato", preserveNullAndEmptyArrays: false}},
+            {"$match":  {"$or" : [{"mandato.fechaTermino": {$eq: null}}, {"mandato.fechaTermino": {$eq: ""}}, {"mandato.fechaTermino": {$gte: new Date(periodo)}}]}},
+            {"$lookup": {from: 'contratos', localField: '_id', foreignField: 'propiedad', as: 'contrato'}},
+            {"$unwind": {path: "$contrato", preserveNullAndEmptyArrays: true}},
+            {"$sort": {"contrato.fechacontrato": -1}},
+            //{"$limit": 1},
+            {"$lookup": {from: 'boletas', localField: 'contrato._id', foreignField: 'contrato', as: 'contrato.boletas'}},
+            {"$lookup": {from: 'pagos', localField: 'contrato._id', foreignField: 'contrato', as: 'contrato.pagos'}},
+            {"$lookup": {from: 'personas', localField: 'contrato.arrendatario', foreignField: '_id', as: 'contrato.arrendatario'}},
+            {"$unwind": {path: "$contrato.arrendatario", preserveNullAndEmptyArrays: true}},
+            {"$lookup": {from: 'direcciones', localField: 'direccion', foreignField: '_id', as: 'direccionData'}},
+            {"$unwind": {path: "$direccionData", preserveNullAndEmptyArrays: true}},
+            {"$group": {_id: "$_id", uId: {"$first": "$uId"}, userid: {"$first": "$userid"}, direccionData: {"$first": "$direccionData"}, contratos: {"$addToSet": "$contrato"},
+                        liquidaciones: {'$addToSet': "$liquidaciones"}}}
+        ]);
+
+        if(periodo){
+            propiedades = propiedades.map(prop =>{
+                prop.contratos = prop.contratos.filter(con => checkContratoPeriodo(con, periodo)).map(cont => {
+                    cont.pagos = cont.pagos.filter(p => matchPeriodo(p.fechaemision, periodo))
+                    cont.boletas = cont.boletas.filter(p => matchPeriodo(p.fecha, periodo))
+                    return cont;
+                })
+                
+                prop.liquidaciones = prop.liquidaciones.flat().filter(liq => matchPeriodo(liq.fecha, periodo))
+                return prop;
+            })
+        }
+        
+        //if(periodo){
+        //    egresos = egresos.filter(egreso => egreso.periodo.getMonth() == (new Date(fecha)).getMonth() && egreso.periodo.getFullYear() == (new Date(fecha)).getFullYear())
+        //    ingresos = ingresos.filter(ingreso => ingreso.periodo.getMonth() == (new Date(fecha)).getMonth() && ingreso.periodo.getFullYear() == (new Date(fecha)).getFullYear())
+        //}
+
+        res.json(propiedades);
+    }catch(err){
+        res.json({message: err});
+    }
+});
+
+
+// Read egresos
+router.get('/infcontribuciones/', validateToken, permissionCheck, async (req, res) =>{
+    // Check if logged user has the permissions
+    valid_permissions = ['admin', 'read-all', 'read-mandato']
+    if(!req.permissions.some(p => valid_permissions.includes(p))) 
+        return res.status(403).send('Forbidden access - lacking permission to perform action');
+
+    try{
+        var propiedades = await Propiedad.aggregate([
+            {"$match" : {...{userid: ObjectId(req.verified.userid)}, ...req.query}},
+            {"$lookup": {from: 'direcciones', localField: 'direccion', foreignField: '_id', as: 'direccionData'}},
+            {"$unwind": {path: "$direccionData", preserveNullAndEmptyArrays: true}},
+            {"$lookup" : {"localField": "mandante", "from" : "personas", "foreignField": "_id", "as" : "mandanteData"}},
+            {"$unwind": {"path": "$mandanteData", 'preserveNullAndEmptyArrays': true}},
+            {"$lookup": { from: 'mandatos', localField: '_id', foreignField: 'propiedad', as: 'mandato'}},
+            {"$unwind": {path: "$mandato", preserveNullAndEmptyArrays: false}},
+            {"$sort": {"mandato.fechaInicio": -1}},
+            {"$match":  {"$or" : [{"mandato.fechaTermino": {$eq: null}}, {"mandato.fechaTermino": {$eq: ""}}, {"mandato.fechaTermino": {$gte: new Date()}}]}}
+        ]);
+
+        res.json(propiedades);
+    }catch(err){
+        res.json({message: err});
+    }
+});
+
+
+// Read saldoanteriorpago
+router.get('/saldoanteriorpago/', validateToken, permissionCheck, async (req, res) =>{
+    // Check if logged user has the permissions
+    valid_permissions = ['admin', 'read-all', 'read-mandato']
+    if(!req.permissions.some(p => valid_permissions.includes(p))) 
+        return res.status(403).send('Forbidden access - lacking permission to perform action');
+    
+    var { propiedad, ...queryClean} = req.query;
+    req.query = queryClean;
+
+    try{
+        var pagos = await Pago.aggregate([
+            {"$match" : {...{userid: ObjectId(req.verified.userid)}, propiedad: ObjectId(propiedad), ...req.query}},
+            {"$sort": {"fechaemision": -1}},
+        ]);
+        
+        if(pagos[0] && pagos[0].saldoanterior != undefined)
+            res.json(pagos.map(pago => pago.subtotal + pago.saldoanterior - pago.pagado));
+        else
+            res.json([0])
     }catch(err){
         res.json({message: err});
     }

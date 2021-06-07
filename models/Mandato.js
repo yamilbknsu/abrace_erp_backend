@@ -52,6 +52,12 @@ const MandatoSchema = mongoose.Schema({
     instrucciones:{
         type: [{nombre: String, detalle:String, _id: mongoose.ObjectId}]
     },
+    contribuciones: Boolean,
+    contribucionesdesc: String,
+    aseo: Boolean,
+    aseodesc: String,
+    otro: Boolean,
+    otrodesc: String,
     otrosdestinatarios:{
         type: [{rut: String,
                 dv: String,

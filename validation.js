@@ -120,6 +120,12 @@ const mandatoValidationSchema = Joi.object().keys({
         detalle: Joi.string().allow(''),
         _id: Joi.string()
     })),
+    contribuciones: Joi.bool(),
+    contribucionesdesc: Joi.string().allow(''),
+    aseo: Joi.bool(),
+    aseodesc: Joi.string().allow(''),
+    otro: Joi.bool(),
+    otrodesc: Joi.string().allow(''),
     otrosdestinatarios: Joi.array().items(Joi.object().keys({
         _id: Joi.string(),
         rut: Joi.string().allow(''),
