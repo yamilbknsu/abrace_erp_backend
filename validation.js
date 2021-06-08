@@ -103,7 +103,8 @@ const mandatoValidationSchema = Joi.object().keys({
         formapago: Joi.string().allow(''),
         cuenta: Joi.string().allow(''),
         banco: Joi.string().allow(''),
-        pagoa: Joi.string().allow('')
+        pagoa: Joi.string().allow(''),
+        tipocuenta: Joi.string().allow('')
     }),
     comisiones: Joi.object().keys({
         tipoadm: Joi.string().allow(''),
@@ -170,6 +171,16 @@ const contratoValidationSchema = Joi.object().keys({
     }))
 });
 
+const validationOptions = { 
+    "messages": { 
+       "string.required":"{#label} es obligatorio",
+       "object.missing":"{#label} es obligatorio",
+       "string.min":"{#label} debe contener por lo menos {#limit} caracteres",
+       "string.empty":"{#label} es obligatorio",
+       "number.base":"{#label} debe ser un numero"
+    }
+ };
+
 
 module.exports = {direccionValidationSchema,
                   propiedadValidationSchema,
@@ -178,4 +189,5 @@ module.exports = {direccionValidationSchema,
                   mandanteValidationSchema,
                   mandatoValidationSchema,
                   contratoValidationSchema,
-                  validateRUT}
+                  validateRUT,
+                  validationOptions}

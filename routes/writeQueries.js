@@ -25,7 +25,8 @@ const {direccionValidationSchema,
        propiedadValidationSchema,
        mandatoValidationSchema,
        contratoValidationSchema,
-       validateRUT} = require('../validation.js');
+       validateRUT,
+       validationOptions} = require('../validation.js');
 const CierreMes = require('../models/CierreMes.js');
 const Liquidacion = require('../models/Liquidacion.js');
 const Egreso = require('../models/Egreso.js');
@@ -44,7 +45,7 @@ router.post('/contratos/', validateToken, permissionCheck, async (req, res) =>{
 
     // Validation
     const validation = contratoValidationSchema.validate(req.body);
-    if (validation.error) return res.status(400).send(validation.error);
+    if (validation.error) return res.status(400).send(validation.error, validationOptions);
 
     // Check if contrato exists
     const contrato = await Contrato.findOne({userid: req.verified.userid,
@@ -73,7 +74,7 @@ router.post('/mandatos/', validateToken, permissionCheck, async (req, res) =>{
         return res.status(403).send('Forbidden access - lacking permission to perform action');
 
     // Validation
-    const validation = mandatoValidationSchema.validate(req.body);
+    const validation = mandatoValidationSchema.validate(req.body, validationOptions);
     if (validation.error) return res.status(400).send(validation.error);
 
     // Check if mandato exists
@@ -101,7 +102,7 @@ router.post('/propiedades/', validateToken, permissionCheck, updateCleaner, asyn
         return res.status(403).send('Forbidden access - lacking permission to perform action');
 
     // Validation
-    const validation = propiedadValidationSchema.validate(req.body);
+    const validation = propiedadValidationSchema.validate(req.body, validationOptions);
     if (validation.error) return res.status(400).send(validation.error);
 
     // Check if uId exists
@@ -127,7 +128,7 @@ router.post('/mandantes/', validateToken, permissionCheck, async (req, res) =>{
         return res.status(403).send('Forbidden access - lacking permission to perform action');
 
     // Validation
-    const validation = mandanteValidationSchema.validate(req.body);
+    const validation = mandanteValidationSchema.validate(req.body, validationOptions);
     if (validation.error) return res.status(400).send(validation.error);
 
     // Check if rut exists
@@ -152,7 +153,7 @@ router.post('/personas/', validateToken, permissionCheck, updateCleaner, async (
         return res.status(403).send('Forbidden access - lacking permission to perform action');
 
     // Validation
-    const validation = personaValidationSchema.validate(req.body);
+    const validation = personaValidationSchema.validate(req.body, validationOptions);
     if (validation.error) return res.status(400).send(validation.error);
     if (!validateRUT(req.body.rut, req.body.dv)) return res.status(400).send('Rut invalido');
 
@@ -182,7 +183,7 @@ router.post('/direcciones/', validateToken, permissionCheck, (req, res) =>{
         return res.status(403).send('Forbidden access - lacking permission to perform action');
 
     // Validation
-    const validation = direccionValidationSchema.validate(req.body);
+    const validation = direccionValidationSchema.validate(req.body, validationOptions);
     if (validation.error) return res.status(400).send(validation.error);
     
     const new_direccion = Direccion(req.body);

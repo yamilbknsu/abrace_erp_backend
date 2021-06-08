@@ -41,6 +41,7 @@ const LiquidacionSchema = mongoose.Schema({
     formapago: String,
     documento: String,
     banco: String,
+    tipocuenta: String,
     totalCargos: Number,
     totalAbonos: Number,
     subtotal: Number,
