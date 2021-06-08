@@ -1,4 +1,5 @@
 const Joi = require('@hapi/joi');
+//const Joi = require('joi-i18n');
 
 // RUT validation function
 function validateRUT(rut, dv){
