@@ -9,7 +9,7 @@ const validateToken = (req, res, next) => {
             const verified = jwt.verify(token, process.env.TOKEN_SECRET);
             req.verified = verified;
             
-            res.setHeader('auth-token', jwt.sign({userid: req.verified.userid}, process.env.TOKEN_SECRET, {"expiresIn": "10min"}));
+            res.setHeader('auth-token', jwt.sign({userid: req.verified.userid}, process.env.TOKEN_SECRET, {"expiresIn": "20min"}));
 
             next();
         }else{

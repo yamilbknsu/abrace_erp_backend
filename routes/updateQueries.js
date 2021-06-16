@@ -207,8 +207,6 @@ router.post('/closecontrato/', validateToken, permissionCheck, updateCleaner, as
     // Check if direccion exists
     const contrato = await Contrato.findOne({_id: req.query.id});
 
-    console.log(contrato)
-
     if (!contrato) return res.status(400).send("Contrato not registered");
     if(contrato.fechatermino) return res.send({message: 'OK'});
 

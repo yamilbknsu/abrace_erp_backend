@@ -670,12 +670,15 @@ router.get('/reajusterentas/', validateToken, permissionCheck, async (req, res) 
             {"$lookup": {from: 'contratos', localField: 'reajusteData.contrato', foreignField: '_id', as: 'reajusteData.contratoData'}},
             {"$unwind": {path: "$reajusteData.contratoData", preserveNullAndEmptyArrays: true}},
             {"$lookup": {from: 'propiedades', localField: 'reajusteData.contratoData.propiedad', foreignField: '_id', as: 'reajusteData.propiedadData'}},
-            {"$unwind": {path: "$reajusteData.propiedadData", preserveNullAndEmptyArrays: false}},
+            {"$unwind": {path: "$reajusteData.propiedadData", preserveNullAndEmptyArrays: true}},
             {"$lookup": {from: 'direcciones', localField: 'reajusteData.propiedadData.direccion', foreignField: '_id', as: 'reajusteData.propiedadData.direccionData'}},
             {"$unwind": {path: "$reajusteData.propiedadData.direccionData", preserveNullAndEmptyArrays: true}},
             {"$group": {_id: "$_id", userid: {"$first": "$userid"}, fecha: {"$first": "$fecha"}, reajustes: {"$addToSet": "$reajusteData"}}}
         ]);
-
+        reajusterentas = reajusterentas.map(reajustes => {
+            if(reajustes.reajustes.length == 1 && typeof Object.keys(reajustes.reajustes[0]).length === 0) reajustes.reajustes = [];
+            return reajustes
+        })
         var ultimo = reajusterentas.sort(sortDate)[0]
         if(fecha){
             reajusterentas = reajusterentas.filter(reajuste => (new Date(reajuste.fecha)).getMonth() == (new Date(fecha)).getMonth() && (new Date(reajuste.fecha)).getFullYear() == (new Date(fecha)).getFullYear())

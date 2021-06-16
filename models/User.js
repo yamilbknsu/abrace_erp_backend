@@ -24,7 +24,13 @@ const UserSchema = mongoose.Schema({
     creationDate:{
         type: Date,
         default: Date.now
-    }
+    },
+    inflinea1: {
+        type: String
+    },
+    inflinea2: {
+        type: String
+    },
 });
 
 module.exports = mongoose.model('Users', UserSchema);

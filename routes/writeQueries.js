@@ -44,8 +44,8 @@ router.post('/contratos/', validateToken, permissionCheck, async (req, res) =>{
     //console.log(req.body);
 
     // Validation
-    const validation = contratoValidationSchema.validate(req.body);
-    if (validation.error) return res.status(400).send(validation.error, validationOptions);
+    const validation = contratoValidationSchema.validate(req.body, validationOptions);
+    if (validation.error) return res.status(400).send(validation.error);
 
     // Check if contrato exists
     const contrato = await Contrato.findOne({userid: req.verified.userid,
