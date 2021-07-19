@@ -42,12 +42,12 @@ checkContratoPeriodo = function(con, periodo){
 // Read propiedades
 router.get('/propiedades/', validateToken, permissionCheck, async (req, res) =>{
     // Check if logged user has the permissions
-    valid_permissions = ['admin', 'read-all', 'read-propiedad']
+    valid_permissions = ['admin', 'read-all', 'read-propiedad', 'propiedades', 'infpropiedades']
     if(!req.permissions.some(p => valid_permissions.includes(p))) 
-        return res.status(403).send('Forbidden access - lacking permission to perform action');
+        return res.status(401).send('No tienes permiso para realizar esta acción.');
 
     try{
-        const users = await Propiedad.aggregate([{"$match" : {...{userid: ObjectId(req.verified.userid)}, ...req.query}},
+        const users = await Propiedad.aggregate([{"$match" : {...{userid: ObjectId(req.body.userid)}, ...req.query}},
                                                  {"$lookup" : {
                                                         "localField": "direccion",
                                                         "from" : "direcciones",
@@ -98,12 +98,12 @@ router.get('/propiedades/', validateToken, permissionCheck, async (req, res) =>{
 // Read direccion
 router.get('/direcciones/', validateToken, permissionCheck, async (req, res) =>{
     // Check if logged user has the permissions
-    valid_permissions = ['admin', 'read-all', 'read-direccion']
+    valid_permissions = ['admin', 'read-all', 'read-direccion', 'propiedades']
     if(!req.permissions.some(p => valid_permissions.includes(p))) 
-        return res.status(403).send('Forbidden access - lacking permission to perform action');
+        return res.status(401).send('No tienes permiso para realizar esta acción.');
 
     try{
-        const direcciones = await Direccion.find({...{userid: req.verified.userid}, ...req.query});
+        const direcciones = await Direccion.find({...{userid: req.body.userid}, ...req.query});
         res.json(direcciones);
     }catch(err){
         res.json({message: err});
@@ -113,11 +113,11 @@ router.get('/direcciones/', validateToken, permissionCheck, async (req, res) =>{
 // Read Personas
 router.get('/personas/', validateToken, permissionCheck, async (req, res) =>{
     // Check if logged user has the permissions
-    valid_permissions = ['admin', 'read-all', 'read-persona']
+    valid_permissions = ['admin', 'read-all', 'read-persona', 'personas']
     if(!req.permissions.some(p => valid_permissions.includes(p))) 
-        return res.status(403).send('Forbidden access - lacking permission to perform action');
+        return res.status(401).send('No tienes permiso para realizar esta acción.');
     try{
-        const users = await Persona.aggregate([{"$match" : {...{userid: ObjectId(req.verified.userid)}, ...req.query}},
+        const users = await Persona.aggregate([{"$match" : {...{userid: ObjectId(req.body.userid)}, ...req.query}},
                                                  {"$lookup" : {
                                                         "localField": "dirParticular",
                                                         "from" : "direcciones",
@@ -132,7 +132,11 @@ router.get('/personas/', validateToken, permissionCheck, async (req, res) =>{
                                                  }},
                                                  {"$unwind": {"path": "$dirParticularData", 'preserveNullAndEmptyArrays': true}},
                                                  {"$unwind": {"path": "$dirComercialData", 'preserveNullAndEmptyArrays': true}}]);
-        res.json(users);
+        res.json(users.map(user => {
+            if(user.ismandante == undefined)
+                user.ismandante = true
+            return user
+        }));
     }catch(err){
         res.json({message: err});
     }
@@ -141,12 +145,12 @@ router.get('/personas/', validateToken, permissionCheck, async (req, res) =>{
 // Read mandatos
 router.get('/mandatos/', validateToken, permissionCheck, async (req, res) =>{
     // Check if logged user has the permissions
-    valid_permissions = ['admin', 'read-all', 'read-mandato']
+    valid_permissions = ['admin', 'read-all', 'read-mandato', 'mandatos']
     if(!req.permissions.some(p => valid_permissions.includes(p))) 
-        return res.status(403).send('Forbidden access - lacking permission to perform action');
+        return res.status(401).send('No tienes permiso para realizar esta acción.');
 
     try{
-        const mandatos = await Mandato.find({...{userid: req.verified.userid}, ...req.query});
+        const mandatos = await Mandato.find({...{userid: req.body.userid}, ...req.query});
         res.json(mandatos);
     }catch(err){
         res.json({message: err});
@@ -158,10 +162,10 @@ router.get('/parametros/', validateToken, permissionCheck, async (req, res) =>{
     // Check if logged user has the permissions
     valid_permissions = ['admin', 'read-all', 'read-parametro']
     if(!req.permissions.some(p => valid_permissions.includes(p))) 
-        return res.status(403).send('Forbidden access - lacking permission to perform action');
+        return res.status(401).send('No tienes permiso para realizar esta acción.');
 
     try{
-        // const parametros = await Parametro.find({...{userid: req.verified.userid}, ...req.query});
+        // const parametros = await Parametro.find({...{userid: req.body.userid}, ...req.query});
         const parametros = await Parametro.find({...req.query});
         res.json(parametros);
     }catch(err){
@@ -172,12 +176,12 @@ router.get('/parametros/', validateToken, permissionCheck, async (req, res) =>{
 // Read contratos
 router.get('/contratos/', validateToken, permissionCheck, async (req, res) =>{
     // Check if logged user has the permissions
-    valid_permissions = ['admin', 'read-all', 'read-contrato']
+    valid_permissions = ['admin', 'read-all', 'read-contrato', 'contratos']
     if(!req.permissions.some(p => valid_permissions.includes(p))) 
-        return res.status(403).send('Forbidden access - lacking permission to perform action');
+        return res.status(401).send('No tienes permiso para realizar esta acción.');
 
     try{
-        const contratos = await Contrato.find({...{userid: req.verified.userid}, ...req.query});
+        const contratos = await Contrato.find({...{userid: req.body.userid}, ...req.query});
         res.json(contratos);
     }catch(err){
         res.json({message: err});
@@ -189,10 +193,10 @@ router.get('/boletas/', validateToken, permissionCheck, async (req, res) =>{
     // Check if logged user has the permissions
     valid_permissions = ['admin', 'read-all', 'read-boleta']
     if(!req.permissions.some(p => valid_permissions.includes(p))) 
-        return res.status(403).send('Forbidden access - lacking permission to perform action');
+        return res.status(401).send('No tienes permiso para realizar esta acción.');;
 
     try{
-        const boletas = await Boleta.find({...{userid: req.verified.userid}, ...req.query});
+        const boletas = await Boleta.find({...{userid: req.body.userid}, ...req.query});
         res.json(boletas);
     }catch(err){
         res.json({message: err});
@@ -204,12 +208,12 @@ router.get('/userparam/', validateToken, permissionCheck, async (req, res) =>{
     // Check if logged user has the permissions
     valid_permissions = ['admin', 'read-all', 'read-parametro']
     if(!req.permissions.some(p => valid_permissions.includes(p))) 
-        return res.status(403).send('Forbidden access - lacking permission to perform action');
+        return res.status(401).send('No tienes permiso para realizar esta acción.');
 
     try{
-        const parametros = await Parametro.find({...{userid: req.verified.userid}, ...req.query});
+        const parametros = await Parametro.find({...{userid: req.body.userid}, ...req.query});
         if(parametros.length == 0){
-            const new_parametro = Parametro({userid: req.verified.userid, concept: req.query.concept, values: []});
+            const new_parametro = Parametro({userid: req.body.userid, concept: req.query.concept, values: []});
             new_parametro.save()
                         .then(data => {
                             if(!res.headersSent) res.json([data]);
@@ -229,13 +233,13 @@ router.get('/cierresmes/', validateToken, permissionCheck, async (req, res) => {
     // Check if logged user has the permissions
     valid_permissions = ['admin', 'read-all', 'read-contrato']
     if(!req.permissions.some(p => valid_permissions.includes(p))) 
-        return res.status(403).send('Forbidden access - lacking permission to perform action');
+        return res.status(401).send('No tienes permiso para realizar esta acción.');
 
     var {fecha, ...queryClean} = req.query;
     req.query = queryClean;
 
     try{
-        const cierresMes = await CierreMes.aggregate([{"$match" : {...{userid: ObjectId(req.verified.userid)}, ...req.query}},
+        const cierresMes = await CierreMes.aggregate([{"$match" : {...{userid: ObjectId(req.body.userid)}, ...req.query}},
                                                       {"$unwind": {path: "$boletas", preserveNullAndEmptyArrays: true}},
                                                       {"$unwind": {path: "$reajustes", preserveNullAndEmptyArrays: true}},
                                                       {"$lookup": {from: 'boletas', localField: 'boletas', foreignField: '_id', as: 'boletaData'}},
@@ -277,14 +281,14 @@ router.get('/contratoscierre/', validateToken, permissionCheck, async (req, res)
     // Check if logged user has the permissions
     valid_permissions = ['admin', 'read-all', 'read-contrato']
     if(!req.permissions.some(p => valid_permissions.includes(p))) 
-        return res.status(403).send('Forbidden access - lacking permission to perform action');
+        return res.status(401).send('No tienes permiso para realizar esta acción.');
 
     var {fecha, ...queryClean} = req.query;
     req.query = queryClean;
     
     try{
         var contratos = await Propiedad.aggregate([
-            {"$match" : {...{userid: ObjectId(req.verified.userid)}, ...req.query}},
+            {"$match" : {...{userid: ObjectId(req.body.userid)}, ...req.query}},
             {"$lookup": {from: 'contratos', localField: '_id', foreignField: 'propiedad', as: 'contratos'}},
             {"$unwind": {path: "$contratos", preserveNullAndEmptyArrays: true}},
             {"$sort": {"contratos.fechacontrato": -1}},
@@ -314,16 +318,16 @@ router.get('/contratoscierre/', validateToken, permissionCheck, async (req, res)
 // Read informe reajuste
 router.get('/infreajustes/', validateToken, permissionCheck, async (req, res) =>{
     // Check if logged user has the permissions
-    valid_permissions = ['admin', 'read-all', 'read-contrato']
+    valid_permissions = ['admin', 'read-all', 'read-contrato', 'infreajustes']
     if(!req.permissions.some(p => valid_permissions.includes(p))) 
-        return res.status(403).send('Forbidden access - lacking permission to perform action');
+        return res.status(401).send('No tienes permiso para realizar esta acción.');
     
     var {periodo, propiedad, contrato, ...queryClean} = req.query;
     req.query = queryClean;  
 
     try{
         var reajustes = await Reajuste.aggregate([
-            {"$match" : {...{userid: ObjectId(req.verified.userid)}, ...req.query}},
+            {"$match" : {...{userid: ObjectId(req.body.userid)}, ...req.query}},
             {"$lookup": {from: 'contratos', localField: 'contrato', foreignField: '_id', as: 'contrato'}},
             {"$unwind": {path: "$contrato", preserveNullAndEmptyArrays: false}},
             {"$lookup": {from: 'propiedades', localField: 'contrato.propiedad', foreignField: '_id', as: 'propiedad'}},
@@ -349,16 +353,16 @@ router.get('/infreajustes/', validateToken, permissionCheck, async (req, res) =>
 // Read propiedades pago
 router.get('/pagopropiedades/', validateToken, permissionCheck, async (req, res) =>{
     // Check if logged user has the permissions
-    valid_permissions = ['admin', 'read-all', 'read-contrato']
+    valid_permissions = ['admin', 'read-all', 'read-contrato', 'pagos', 'resumenpagos']
     if(!req.permissions.some(p => valid_permissions.includes(p))) 
-        return res.status(403).send('Forbidden access - lacking permission to perform action');
+        return res.status(401).send('No tienes permiso para realizar esta acción.');
 
     var {periodo, propiedad, contrato, ...queryClean} = req.query;
     req.query = queryClean;
     
     try{
         var propiedades = await Propiedad.aggregate([
-            {"$match" : {...{userid: ObjectId(req.verified.userid)}, ...req.query}},
+            {"$match" : {...{userid: ObjectId(req.body.userid)}, ...req.query}},
             {"$lookup": {from: 'contratos', localField: '_id', foreignField: 'propiedad', as: 'contrato'}},
             {"$unwind": {path: "$contrato", preserveNullAndEmptyArrays: false}},
             {"$sort": {"contrato.fechacontrato": -1}},
@@ -372,7 +376,7 @@ router.get('/pagopropiedades/', validateToken, permissionCheck, async (req, res)
         ]);
 
         var reajustes = await Reajuste.aggregate([
-            {"$match" : {...{userid: ObjectId(req.verified.userid)}, ...req.query}},
+            {"$match" : {...{userid: ObjectId(req.body.userid)}, ...req.query}},
             {"$lookup": {from: 'contratos', localField: 'contrato', foreignField: '_id', as: 'contrato'}},
             {"$unwind": {path: "$contrato", preserveNullAndEmptyArrays: true}},
             {"$lookup": {from: 'propiedades', localField: 'contrato.propiedad', foreignField: '_id', as: 'propiedad'}},
@@ -420,16 +424,16 @@ router.get('/pagopropiedades/', validateToken, permissionCheck, async (req, res)
 // Read informes pago
 router.get('/infpago/', validateToken, permissionCheck, async (req, res) =>{
     // Check if logged user has the permissions
-    valid_permissions = ['admin', 'read-all', 'read-contrato']
+    valid_permissions = ['admin', 'read-all', 'read-contrato', 'resumenpagos', 'pagos']
     if(!req.permissions.some(p => valid_permissions.includes(p))) 
-        return res.status(403).send('Forbidden access - lacking permission to perform action');
+        return res.status(401).send('No tienes permiso para realizar esta acción.');
     
     var {fecha, fechastart, fechaend, propiedad, ...queryClean} = req.query;
     req.query = queryClean;
     
     try{
         var propiedades = await Propiedad.aggregate([
-            {"$match" : {...{userid: ObjectId(req.verified.userid)}, ...req.query}},
+            {"$match" : {...{userid: ObjectId(req.body.userid)}, ...req.query}},
             {"$lookup": {from: 'contratos', localField: '_id', foreignField: 'propiedad', as: 'contrato'}},
             {"$unwind": {path: "$contrato", preserveNullAndEmptyArrays: false}},
             {"$sort": {"contrato.fechacontrato": -1}},
@@ -468,16 +472,16 @@ router.get('/infpago/', validateToken, permissionCheck, async (req, res) =>{
 // Read informes liquidacion
 router.get('/boletasliquidacion/', validateToken, permissionCheck, async (req, res) =>{
     // Check if logged user has the permissions
-    valid_permissions = ['admin', 'read-all', 'read-contrato']
+    valid_permissions = ['admin', 'read-all', 'read-contrato', 'liquidacion', 'resumenliq']
     if(!req.permissions.some(p => valid_permissions.includes(p))) 
-        return res.status(403).send('Forbidden access - lacking permission to perform action');
+        return res.status(401).send('No tienes permiso para realizar esta acción.');
     
     var {fecha, propiedad, ...queryClean} = req.query;
     req.query = queryClean;
 
     try{
         var propiedades = await Propiedad.aggregate([
-            {"$match" : {...{userid: ObjectId(req.verified.userid)}, ...req.query}},
+            {"$match" : {...{userid: ObjectId(req.body.userid)}, ...req.query}},
             {"$match" : {...{_id: ObjectId(propiedad)}}},
             {"$lookup": { from: 'contratos', localField: '_id', foreignField: 'propiedad', as: 'contrato'}},
             {"$unwind": {path: "$contrato", preserveNullAndEmptyArrays: false}},
@@ -504,16 +508,16 @@ router.get('/boletasliquidacion/', validateToken, permissionCheck, async (req, r
 // Read liquidaciones
 router.get('/liquidaciones/', validateToken, permissionCheck, async (req, res) =>{
     // Check if logged user has the permissions
-    valid_permissions = ['admin', 'read-all', 'read-mandato']
+    valid_permissions = ['admin', 'read-all', 'read-mandato', 'liquidacion', 'resumenliq']
     if(!req.permissions.some(p => valid_permissions.includes(p))) 
-        return res.status(403).send('Forbidden access - lacking permission to perform action');
+        return res.status(401).send('No tienes permiso para realizar esta acción.');
 
     var {fecha, propiedad, ...queryClean} = req.query;
     req.query = queryClean;
 
     try{
         var liquidaciones = await Propiedad.aggregate([
-            {"$match" : {...{userid: ObjectId(req.verified.userid)}, ...req.query}},
+            {"$match" : {...{userid: ObjectId(req.body.userid)}, ...req.query}},
             {"$lookup": {from: 'liquidaciones', localField: '_id', foreignField: 'propiedad', as: 'liquidaciones'}},
             {"$lookup": { from: 'mandatos', localField: '_id', foreignField: 'propiedad', as: 'mandato'}},
             {"$unwind": {path: "$mandato", preserveNullAndEmptyArrays: false}},
@@ -546,16 +550,16 @@ router.get('/liquidaciones/', validateToken, permissionCheck, async (req, res) =
 // Read liquidaciones
 router.get('/infliquidacion/', validateToken, permissionCheck, async (req, res) =>{
     // Check if logged user has the permissions
-    valid_permissions = ['admin', 'read-all', 'read-mandato']
+    valid_permissions = ['admin', 'read-all', 'read-mandato', 'liquidacion', 'resumenliq']
     if(!req.permissions.some(p => valid_permissions.includes(p))) 
-        return res.status(403).send('Forbidden access - lacking permission to perform action');
+        return res.status(401).send('No tienes permiso para realizar esta acción.');
 
     var {fecha, fechastart, fechaend, propiedad, ...queryClean} = req.query;
     req.query = queryClean;
 
     try{
         var liquidaciones = await Propiedad.aggregate([
-            {"$match" : {...{userid: ObjectId(req.verified.userid)}, ...req.query}},
+            {"$match" : {...{userid: ObjectId(req.body.userid)}, ...req.query}},
             {"$lookup": {from: 'liquidaciones', localField: '_id', foreignField: 'propiedad', as: 'liquidaciones'}},
             {"$lookup": { from: 'mandatos', localField: '_id', foreignField: 'propiedad', as: 'mandato'}},
             {"$unwind": {path: "$mandato", preserveNullAndEmptyArrays: false}},
@@ -624,12 +628,12 @@ router.get('/infliquidacion/', validateToken, permissionCheck, async (req, res) 
 // Read ingresos
 router.get('/ingresos/', validateToken, permissionCheck, async (req, res) =>{
     // Check if logged user has the permissions
-    valid_permissions = ['admin', 'read-all', 'read-mandato']
+    valid_permissions = ['admin', 'read-all', 'read-mandato', 'ingresos']
     if(!req.permissions.some(p => valid_permissions.includes(p))) 
-        return res.status(403).send('Forbidden access - lacking permission to perform action');
+        return res.status(401).send('No tienes permiso para realizar esta acción.');
 
     try{
-        const ingresos = await Ingreso.find({...{userid: req.verified.userid}, ...req.query});
+        const ingresos = await Ingreso.find({...{userid: req.body.userid}, ...req.query});
         res.json(ingresos);
     }catch(err){
         res.json({message: err});
@@ -639,12 +643,12 @@ router.get('/ingresos/', validateToken, permissionCheck, async (req, res) =>{
 // Read egresos
 router.get('/egresos/', validateToken, permissionCheck, async (req, res) =>{
     // Check if logged user has the permissions
-    valid_permissions = ['admin', 'read-all', 'read-mandato']
+    valid_permissions = ['admin', 'read-all', 'read-mandato', 'egresos']
     if(!req.permissions.some(p => valid_permissions.includes(p))) 
-        return res.status(403).send('Forbidden access - lacking permission to perform action');
+        return res.status(401).send('No tienes permiso para realizar esta acción.');
 
     try{
-        const egresos = await Egreso.find({...{userid: req.verified.userid}, ...req.query});
+        const egresos = await Egreso.find({...{userid: req.body.userid}, ...req.query});
         res.json(egresos);
     }catch(err){
         res.json({message: err});
@@ -656,14 +660,14 @@ router.get('/reajusterentas/', validateToken, permissionCheck, async (req, res) 
     // Check if logged user has the permissions
     valid_permissions = ['admin', 'read-all', 'read-contrato']
     if(!req.permissions.some(p => valid_permissions.includes(p))) 
-        return res.status(403).send('Forbidden access - lacking permission to perform action');
+        return res.status(401).send('No tienes permiso para realizar esta acción.');
 
     var {fecha, ...queryClean} = req.query;
     req.query = queryClean;
 
     try{
         var reajusterentas = await ReajusteRentas.aggregate([
-            {"$match":  {...{userid: ObjectId(req.verified.userid)}, ...req.query}},
+            {"$match":  {...{userid: ObjectId(req.body.userid)}, ...req.query}},
             {"$unwind": {path: "$reajustes", preserveNullAndEmptyArrays: true}},
             {"$lookup": {from: 'reajustes', localField: 'reajustes', foreignField: '_id', as: 'reajusteData'}},
             {"$unwind": {path: "$reajusteData", preserveNullAndEmptyArrays: true}},
@@ -696,14 +700,14 @@ router.get('/reajustesextraordinarios/', validateToken, permissionCheck, async (
     // Check if logged user has the permissions
     valid_permissions = ['admin', 'read-all', 'read-mandato']
     if(!req.permissions.some(p => valid_permissions.includes(p))) 
-        return res.status(403).send('Forbidden access - lacking permission to perform action');
+        return res.status(401).send('No tienes permiso para realizar esta acción.');
 
     var {contrato, fecha, ...queryClean} = req.query;
     req.query = queryClean;
 
     try{
         var reajustesextraordinarios = await ReajusteExtraordinario.aggregate([
-            {"$match": {...{userid: ObjectId(req.verified.userid)}, ...req.query}},
+            {"$match": {...{userid: ObjectId(req.body.userid)}, ...req.query}},
             {"$lookup": {from: 'contratos', localField: 'contrato', foreignField: '_id', as: 'contratoData'}},
             {'$unwind': {path: "$contratoData", preserveNullAndEmptyArrays: true}},
             {"$lookup": {from: 'propiedades', localField: 'contratoData.propiedad', foreignField: '_id', as: 'propiedadData'}},
@@ -728,16 +732,16 @@ router.get('/reajustesextraordinarios/', validateToken, permissionCheck, async (
 // Read egresos
 router.get('/ingresosegresospropiedad/', validateToken, permissionCheck, async (req, res) =>{
     // Check if logged user has the permissions
-    valid_permissions = ['admin', 'read-all', 'read-mandato']
+    valid_permissions = ['admin', 'read-all', 'read-mandato', 'pagos', 'liquidacion']
     if(!req.permissions.some(p => valid_permissions.includes(p))) 
-        return res.status(403).send('Forbidden access - lacking permission to perform action');
+        return res.status(401).send('No tienes permiso para realizar esta acción.');
 
     var {propiedad, fecha, ...queryClean} = req.query;
     req.query = queryClean;
 
     try{
-        var egresos = await Egreso.find({...{userid: req.verified.userid}, ...req.query});
-        var ingresos = await Ingreso.find({...{userid: req.verified.userid}, ...req.query});
+        var egresos = await Egreso.find({...{userid: req.body.userid}, ...req.query});
+        var ingresos = await Ingreso.find({...{userid: req.body.userid}, ...req.query});
         if(propiedad){
             egresos = egresos.filter(egreso => egreso.propiedad == propiedad)
             ingresos = ingresos.filter(ingreso => ingreso.propiedad == propiedad)
@@ -758,14 +762,14 @@ router.get('/fechasliqpagos/', validateToken, permissionCheck, async (req, res) 
     // Check if logged user has the permissions
     valid_permissions = ['admin', 'read-all', 'read-mandato']
     if(!req.permissions.some(p => valid_permissions.includes(p))) 
-        return res.status(403).send('Forbidden access - lacking permission to perform action');
+        return res.status(401).send('No tienes permiso para realizar esta acción.');
 
     var {propiedad, ...queryClean} = req.query;
     req.query = queryClean;
 
     try{
         var liquidaciones = await Propiedad.aggregate([
-            {"$match" : {...{userid: ObjectId(req.verified.userid)}, ...req.query}},
+            {"$match" : {...{userid: ObjectId(req.body.userid)}, ...req.query}},
             {"$lookup": {from: 'liquidaciones', localField: '_id', foreignField: 'propiedad', as: 'liquidaciones'}},
             {"$lookup": { from: 'mandatos', localField: '_id', foreignField: 'propiedad', as: 'mandato'}},
             {"$unwind": {path: "$mandato", preserveNullAndEmptyArrays: false}},
@@ -775,7 +779,7 @@ router.get('/fechasliqpagos/', validateToken, permissionCheck, async (req, res) 
         ]);
 
         var pagos = await Propiedad.aggregate([
-            {"$match" : {...{userid: ObjectId(req.verified.userid)}, ...req.query}},
+            {"$match" : {...{userid: ObjectId(req.body.userid)}, ...req.query}},
             {"$lookup": {from: 'contratos', localField: '_id', foreignField: 'propiedad', as: 'contrato'}},
             {"$unwind": {path: "$contrato", preserveNullAndEmptyArrays: false}},
             {"$sort": {"contrato.fechacontrato": -1}},
@@ -789,7 +793,7 @@ router.get('/fechasliqpagos/', validateToken, permissionCheck, async (req, res) 
         ]);
 
         var reajusterentas = await ReajusteRentas.aggregate([
-            {"$match":  {...{userid: ObjectId(req.verified.userid)}, ...req.query}},
+            {"$match":  {...{userid: ObjectId(req.body.userid)}, ...req.query}},
             {"$unwind": {path: "$reajustes", preserveNullAndEmptyArrays: true}},
             {"$lookup": {from: 'reajustes', localField: 'reajustes', foreignField: '_id', as: 'reajusteData'}},
             {"$unwind": {path: "$reajusteData", preserveNullAndEmptyArrays: true}},
@@ -819,16 +823,16 @@ router.get('/fechasliqpagos/', validateToken, permissionCheck, async (req, res) 
 // Read egresos
 router.get('/estadopagos/', validateToken, permissionCheck, async (req, res) =>{
     // Check if logged user has the permissions
-    valid_permissions = ['admin', 'read-all', 'read-mandato']
+    valid_permissions = ['admin', 'read-all', 'read-mandato', 'estadopagos']
     if(!req.permissions.some(p => valid_permissions.includes(p))) 
-        return res.status(403).send('Forbidden access - lacking permission to perform action');
+        return res.status(401).send('No tienes permiso para realizar esta acción.');
 
     var { periodo, ...queryClean} = req.query;
     req.query = queryClean;
 
     try{
         var propiedades = await Propiedad.aggregate([
-            {"$match" : {...{userid: ObjectId(req.verified.userid)}, ...req.query}},
+            {"$match" : {...{userid: ObjectId(req.body.userid)}, ...req.query}},
             {"$lookup": {from: 'liquidaciones', localField: '_id', foreignField: 'propiedad', as: 'liquidaciones'}},
             {"$lookup": { from: 'mandatos', localField: '_id', foreignField: 'propiedad', as: 'mandato'}},
             {"$unwind": {path: "$mandato", preserveNullAndEmptyArrays: false}},
@@ -875,13 +879,13 @@ router.get('/estadopagos/', validateToken, permissionCheck, async (req, res) =>{
 // Read egresos
 router.get('/infcontribuciones/', validateToken, permissionCheck, async (req, res) =>{
     // Check if logged user has the permissions
-    valid_permissions = ['admin', 'read-all', 'read-mandato']
+    valid_permissions = ['admin', 'read-all', 'read-mandato', 'instpago']
     if(!req.permissions.some(p => valid_permissions.includes(p))) 
-        return res.status(403).send('Forbidden access - lacking permission to perform action');
+        return res.status(401).send('No tienes permiso para realizar esta acción.');
 
     try{
         var propiedades = await Propiedad.aggregate([
-            {"$match" : {...{userid: ObjectId(req.verified.userid)}, ...req.query}},
+            {"$match" : {...{userid: ObjectId(req.body.userid)}, ...req.query}},
             {"$lookup": {from: 'direcciones', localField: 'direccion', foreignField: '_id', as: 'direccionData'}},
             {"$unwind": {path: "$direccionData", preserveNullAndEmptyArrays: true}},
             {"$lookup" : {"localField": "mandante", "from" : "personas", "foreignField": "_id", "as" : "mandanteData"}},
@@ -902,16 +906,16 @@ router.get('/infcontribuciones/', validateToken, permissionCheck, async (req, re
 // Read saldoanteriorpago
 router.get('/saldoanteriorpago/', validateToken, permissionCheck, async (req, res) =>{
     // Check if logged user has the permissions
-    valid_permissions = ['admin', 'read-all', 'read-mandato']
+    valid_permissions = ['admin', 'read-all', 'read-mandato', 'pagos']
     if(!req.permissions.some(p => valid_permissions.includes(p))) 
-        return res.status(403).send('Forbidden access - lacking permission to perform action');
+        return res.status(401).send('No tienes permiso para realizar esta acción.');
     
     var { propiedad, ...queryClean} = req.query;
     req.query = queryClean;
 
     try{
         var pagos = await Pago.aggregate([
-            {"$match" : {...{userid: ObjectId(req.verified.userid)}, propiedad: ObjectId(propiedad), ...req.query}},
+            {"$match" : {...{userid: ObjectId(req.body.userid)}, propiedad: ObjectId(propiedad), ...req.query}},
             {"$sort": {"fechaemision": -1}},
         ]);
         

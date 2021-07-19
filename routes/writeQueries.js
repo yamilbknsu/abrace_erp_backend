@@ -37,18 +37,18 @@ const ReajusteExtraordinario = require('../models/ReajusteExtraordinario.js');
 // Write a contrato
 router.post('/contratos/', validateToken, permissionCheck, async (req, res) =>{
     // Check if logged user has the permissions
-    valid_permissions = ['admin', 'write-all', 'write-contrato']
+    valid_permissions = ['admin', 'write-all', 'write-contrato', 'contratos']
     if(!req.permissions.some(p => valid_permissions.includes(p))) 
-        return res.status(403).send('Forbidden access - lacking permission to perform action');
+        return res.status(401).send('No tienes permiso para realizar esta acción.');
 
-    //console.log(req.body);
+    
 
     // Validation
     const validation = contratoValidationSchema.validate(req.body, validationOptions);
     if (validation.error) return res.status(400).send(validation.error);
 
     // Check if contrato exists
-    const contrato = await Contrato.findOne({userid: req.verified.userid,
+    const contrato = await Contrato.findOne({userid: req.body.userid,
                                              propiedad: req.body.propiedad,
                                              arrendatario: req.body.arrendatario,
                                              fechaInicio: req.body.fechacontrato});
@@ -56,6 +56,9 @@ router.post('/contratos/', validateToken, permissionCheck, async (req, res) =>{
     if (contrato) return res.status(400).send("Contrato already registered");
     
     //TODO: Check if the last one is closed
+    
+    
+    if(req.body.aval == '') req.body.aval = undefined
 
     const new_contrato = Contrato(req.body);
     new_contrato.save()
@@ -69,16 +72,16 @@ router.post('/contratos/', validateToken, permissionCheck, async (req, res) =>{
 // Write a mandato
 router.post('/mandatos/', validateToken, permissionCheck, async (req, res) =>{
     // Check if logged user has the permissions
-    valid_permissions = ['admin', 'write-all', 'write-mandato']
+    valid_permissions = ['admin', 'write-all', 'write-mandato', 'mandatos']
     if(!req.permissions.some(p => valid_permissions.includes(p))) 
-        return res.status(403).send('Forbidden access - lacking permission to perform action');
+        return res.status(401).send('No tienes permiso para realizar esta acción.');
 
     // Validation
     const validation = mandatoValidationSchema.validate(req.body, validationOptions);
     if (validation.error) return res.status(400).send(validation.error);
 
     // Check if mandato exists
-    const mandato = await Mandato.findOne({userid: req.verified.userid,
+    const mandato = await Mandato.findOne({userid: req.body.userid,
                                            propiedad: req.body.propiedad,
                                            fechaInicio: req.body.fechaInicio});
     if (mandato) return res.status(400).send("Mandato already registered");
@@ -97,16 +100,16 @@ router.post('/mandatos/', validateToken, permissionCheck, async (req, res) =>{
 // Write a propiedad
 router.post('/propiedades/', validateToken, permissionCheck, updateCleaner, async (req, res) =>{
     // Check if logged user has the permissions
-    valid_permissions = ['admin', 'write-all', 'write-propiedad']
+    valid_permissions = ['admin', 'write-all', 'write-propiedad', 'propiedades']
     if(!req.permissions.some(p => valid_permissions.includes(p))) 
-        return res.status(403).send('Forbidden access - lacking permission to perform action');
+        return res.status(401).send('No tienes permiso para realizar esta acción.');
 
     // Validation
     const validation = propiedadValidationSchema.validate(req.body, validationOptions);
     if (validation.error) return res.status(400).send(validation.error);
 
     // Check if uId exists
-    const propiedad = await Propiedad.findOne({userid: req.verified.userid, uId: req.body.uId});
+    const propiedad = await Propiedad.findOne({userid: req.body.userid, uId: req.body.uId});
     if (propiedad) return res.status(400).send("Propiedad already registered");
 
     if(req.body.administrador == '') req.body.administrador = null;
@@ -125,14 +128,14 @@ router.post('/mandantes/', validateToken, permissionCheck, async (req, res) =>{
     // Check if logged user has the permissions
     valid_permissions = ['admin', 'write-all', 'write-mandante']
     if(!req.permissions.some(p => valid_permissions.includes(p))) 
-        return res.status(403).send('Forbidden access - lacking permission to perform action');
+        return res.status(401).send('No tienes permiso para realizar esta acción.');
 
     // Validation
     const validation = mandanteValidationSchema.validate(req.body, validationOptions);
     if (validation.error) return res.status(400).send(validation.error);
 
     // Check if rut exists
-    const mandante = await Mandante.findOne({userid: req.verified.userid, personaID: req.body.personaID});
+    const mandante = await Mandante.findOne({userid: req.body.userid, personaID: req.body.personaID});
     if (mandante) return res.status(400).send("Persona already registered as a mandante");
 
     const new_mandate = Mandante(req.body);
@@ -148,9 +151,9 @@ router.post('/mandantes/', validateToken, permissionCheck, async (req, res) =>{
 // Write a Persona
 router.post('/personas/', validateToken, permissionCheck, updateCleaner, async (req, res) =>{
     // Check if logged user has the permissions
-    valid_permissions = ['admin', 'write-all', 'write-persona']
+    valid_permissions = ['admin', 'write-all', 'write-persona', 'personas']
     if(!req.permissions.some(p => valid_permissions.includes(p))) 
-        return res.status(403).send('Forbidden access - lacking permission to perform action');
+        return res.status(401).send('No tienes permiso para realizar esta acción.');
 
     // Validation
     const validation = personaValidationSchema.validate(req.body, validationOptions);
@@ -158,10 +161,13 @@ router.post('/personas/', validateToken, permissionCheck, updateCleaner, async (
     if (!validateRUT(req.body.rut, req.body.dv)) return res.status(400).send('Rut invalido');
 
     // Check if rut exists
-    const persona = await Persona.findOne({userid: req.verified.userid, rut: req.body.rut});
-    if (persona) return res.status(400).send("Rut already exists");
+    var personas = await Persona.find({userid: req.body.userid, rut: req.body.rut});
+    personas = personas.filter(p => p.ismandante == req.body.ismandante)
+    if (personas)
+        for(let i =0; i < personas.length; i++){
+            if(personas[i].ismandante == req.body.ismandante) return res.status(400).send("Rut ya existe");
+        }
 
-    console.log(req.body)
     if(req.body.dirParticular == '') req.body.dirParticular = null;
     if(req.body.dirComercial == '') req.body.dirComercial = null;
 
@@ -178,9 +184,9 @@ router.post('/personas/', validateToken, permissionCheck, updateCleaner, async (
 router.post('/direcciones/', validateToken, permissionCheck, (req, res) =>{
     
     // Check if logged user has the permissions
-    valid_permissions = ['admin', 'write-all', 'write-direccion']
+    valid_permissions = ['admin', 'write-all', 'write-direccion', 'propiedades']
     if(!req.permissions.some(p => valid_permissions.includes(p))) 
-        return res.status(403).send('Forbidden access - lacking permission to perform action');
+        return res.status(401).send('No tienes permiso para realizar esta acción.');
 
     // Validation
     const validation = direccionValidationSchema.validate(req.body, validationOptions);
@@ -199,9 +205,9 @@ router.post('/direcciones/', validateToken, permissionCheck, (req, res) =>{
 router.post('/boletas/', validateToken, permissionCheck, (req, res) =>{
     
     // Check if logged user has the permissions
-    valid_permissions = ['admin', 'write-all', 'write-boleta']
+    valid_permissions = ['admin', 'write-all', 'write-boleta', 'cierresmes']
     if(!req.permissions.some(p => valid_permissions.includes(p))) 
-        return res.status(403).send('Forbidden access - lacking permission to perform action');
+        return res.status(401).send('No tienes permiso para realizar esta acción.');
     
     const new_boleta = Boleta(req.body);
     new_boleta.save()
@@ -216,9 +222,9 @@ router.post('/boletas/', validateToken, permissionCheck, (req, res) =>{
 router.post('/cierresmes/', validateToken, permissionCheck, async (req, res) =>{
     
     // Check if logged user has the permissions
-    valid_permissions = ['admin', 'write-all', 'write-boleta']
+    valid_permissions = ['admin', 'write-all', 'write-boleta', 'cierresmes']
     if(!req.permissions.some(p => valid_permissions.includes(p))) 
-        return res.status(403).send('Forbidden access - lacking permission to perform action');
+        return res.status(401).send('No tienes permiso para realizar esta acción.');
 
     const boletas = req.body.recibos;
     const reajustes = req.body.reajustes;
@@ -287,9 +293,9 @@ router.post('/cierresmes/', validateToken, permissionCheck, async (req, res) =>{
 router.post('/reajustesmes/', validateToken, permissionCheck, async (req, res) =>{
     
     // Check if logged user has the permissions
-    valid_permissions = ['admin', 'write-all', 'write-boleta']
+    valid_permissions = ['admin', 'write-all', 'write-boleta', 'reajustesrentas']
     if(!req.permissions.some(p => valid_permissions.includes(p))) 
-        return res.status(403).send('Forbidden access - lacking permission to perform action');
+        return res.status(401).send('No tienes permiso para realizar esta acción.');
 
     const reajustes = req.body.reajustes.reajustes;
     const reajustesextraordinarios = req.body.reajustes.reajustesExtraordinarios;
@@ -324,7 +330,7 @@ router.post('/reajustesmes/', validateToken, permissionCheck, async (req, res) =
     });
 
     reajustesextraordinarios.forEach(async element => {
-        console.log(element)
+        //console.log(element)
         if(element.reajuste != 0){
             var new_reajuste = Reajuste(element);
             promises.push(new_reajuste.save());
@@ -378,9 +384,9 @@ router.post('/reajustesmes/', validateToken, permissionCheck, async (req, res) =
 router.post('/pagos/', validateToken, permissionCheck, (req, res) =>{
     
     // Check if logged user has the permissions
-    valid_permissions = ['admin', 'write-all', 'write-boleta']
+    valid_permissions = ['admin', 'write-all', 'write-boleta', 'pagos']
     if(!req.permissions.some(p => valid_permissions.includes(p))) 
-        return res.status(403).send('Forbidden access - lacking permission to perform action');
+        return res.status(401).send('No tienes permiso para realizar esta acción.');
     
     //var boletasPromises = [];
     //req.body.cargos.forEach(cargo => {
@@ -405,9 +411,9 @@ router.post('/pagos/', validateToken, permissionCheck, (req, res) =>{
 router.post('/liquidaciones/', validateToken, permissionCheck, (req, res) =>{
     
     // Check if logged user has the permissions
-    valid_permissions = ['admin', 'write-all', 'write-boleta']
+    valid_permissions = ['admin', 'write-all', 'write-boleta', 'liquidacion']
     if(!req.permissions.some(p => valid_permissions.includes(p))) 
-        return res.status(403).send('Forbidden access - lacking permission to perform action');
+        return res.status(401).send('No tienes permiso para realizar esta acción.');
 
     const new_liquidacion = Liquidacion(req.body);
     new_liquidacion.save()
@@ -422,9 +428,9 @@ router.post('/liquidaciones/', validateToken, permissionCheck, (req, res) =>{
 router.post('/egresos/', validateToken, permissionCheck, (req, res) =>{
     
     // Check if logged user has the permissions
-    valid_permissions = ['admin', 'write-all', 'write-boleta']
+    valid_permissions = ['admin', 'write-all', 'write-boleta', 'egresos']
     if(!req.permissions.some(p => valid_permissions.includes(p))) 
-        return res.status(403).send('Forbidden access - lacking permission to perform action');
+        return res.status(401).send('No tienes permiso para realizar esta acción.');
 
     const new_egreso = Egreso(req.body);
     new_egreso.save()
@@ -439,9 +445,9 @@ router.post('/egresos/', validateToken, permissionCheck, (req, res) =>{
 router.post('/ingresos/', validateToken, permissionCheck, (req, res) =>{
     
     // Check if logged user has the permissions
-    valid_permissions = ['admin', 'write-all', 'write-boleta']
+    valid_permissions = ['admin', 'write-all', 'write-boleta', 'ingresos']
     if(!req.permissions.some(p => valid_permissions.includes(p))) 
-        return res.status(403).send('Forbidden access - lacking permission to perform action');
+        return res.status(401).send('No tienes permiso para realizar esta acción.');
 
     const new_ingreso = Ingreso(req.body);
     new_ingreso.save()
@@ -456,9 +462,9 @@ router.post('/ingresos/', validateToken, permissionCheck, (req, res) =>{
 router.post('/reajustesextraordinarios/', validateToken, permissionCheck, (req, res) =>{
     
     // Check if logged user has the permissions
-    valid_permissions = ['admin', 'write-all', 'write-mandato']
+    valid_permissions = ['admin', 'write-all', 'write-mandato', 'reajusteextraordinario']
     if(!req.permissions.some(p => valid_permissions.includes(p))) 
-        return res.status(403).send('Forbidden access - lacking permission to perform action');
+        return res.status(401).send('No tienes permiso para realizar esta acción.');
 
     const reajustesextraordinario = ReajusteExtraordinario(req.body);
     reajustesextraordinario.save()

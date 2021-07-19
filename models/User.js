@@ -21,6 +21,13 @@ const UserSchema = mongoose.Schema({
         type: [String],
         default: ['none']
     },
+    externalPermissions:{
+        type: [{
+            user: mongoose.ObjectId,
+            permissions: [String]
+        }],
+        default: ['none']
+    },
     creationDate:{
         type: Date,
         default: Date.now

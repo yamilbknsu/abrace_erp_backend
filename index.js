@@ -26,7 +26,7 @@ app.use(function (req, res, next) {
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
 
     // Request headers you wish to allow
-    res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,content-type, auth-token');
+    res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,content-type, auth-token, logged_as_id');
 
     res.header('Access-Control-Expose-Headers', 'auth-token');
 

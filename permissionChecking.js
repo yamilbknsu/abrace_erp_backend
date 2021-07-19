@@ -36,15 +36,42 @@ delete-persona: Access to delete on persona collection
 delete-direccion: Access to delete on direccion collection
 delete-mandato: Access to delete on mandato collection
 delete-contrato: Access to delete on contrato collection
+
+------------------------------------------------
+
+propiedades: Modify and create propiedades
+mandatos
+contratos
+personas
+ingresos
+egresos
+liquidacion
+pagos
+cierresmes
+reajustesrentas
+reajusteextraordinario
+infpropiedades
+infreajustes
+resumenliq
+resumenpago
+estadopagos
+instpago
+parametros
 */
 
 const loadPermissions = async (req, res, next) => {
     // Checking if user exists
     const user = await User.findOne({_id: req.verified.userid});
-    if (!user) return res.status(400).send('userid passed along with the token is not valid!');
+    if (!user) return res.status(400).send('Usuario no valido!');
     
-    req.permissions = user.permissions;
-    req.body.userid = req.verified.userid;
+    if(typeof req.headers['logged_as_id'] === 'undefined' || req.headers['logged_as_id'] == req.verified.userid){
+        req.permissions = user.permissions;
+        req.body.userid = req.verified.userid;
+    }else{
+        const permissions = user.externalPermissions.filter(p => p.user == req.headers['logged_as_id'])
+        req.permissions = permissions.length > 0 ? permissions[0].permissions : [];
+        req.body.userid = req.headers['logged_as_id'];
+    }
     next();
 }
 

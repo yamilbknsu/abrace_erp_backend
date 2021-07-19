@@ -49,13 +49,21 @@ router.get('/', validateToken, permissionCheck, async (req, res) => {
     // Check if logged user has the permissions
     valid_permissions = ['admin']
     if(!req.permissions.some(p => valid_permissions.includes(p))) 
-        return res.status(403).send('Forbidden access - lacking permission to perform action');
+        return res.status(401).send('No tienes permiso para realizar esta acción.');
         
     try{
-        //console.log(req.verified);
         const users = await User.find();
         res.json(users.map(user => ({_id: user.id, displayname: user.displayname, username: user.username, email: user.email, permissions: user.permissions,
                                      creationDate: user.creationDate, inflinea1: user.inflinea1, inflinea2: user.inflinea2})));
+    }catch(err){
+        res.json({message: err});
+    }
+});
+
+router.get('/users', validateToken, permissionCheck, async (req, res) => {
+    try{
+        const users = await User.find();
+        res.json(users.map(user => ({_id: user.id, displayname: user.displayname})));
     }catch(err){
         res.json({message: err});
     }
@@ -77,7 +85,7 @@ router.post('/register/', validateToken, permissionCheck, async (req, res) => {
     // Check if logged user has the permissions
     valid_permissions = ['admin']
     if(!req.permissions.some(p => valid_permissions.includes(p))) 
-        return res.status(403).send('Forbidden access - lacking permission to perform action');
+        return res.status(401).send('No tienes permiso para realizar esta acción.');
 
     // Validation
     const validation = userValidationSchema.validate(req.body, validationOptions);
@@ -146,7 +154,7 @@ router.post('/user/', validateToken, permissionCheck, async (req, res) => {
         // Check if logged user has the permissions
         valid_permissions = ['admin']
         if(!req.permissions.some(p => valid_permissions.includes(p))) 
-            return res.status(403).send('Forbidden access - lacking permission to perform action');
+            return res.status(401).send('No tienes permiso para realizar esta acción.');
     }
 
     // Validation
@@ -192,7 +200,7 @@ router.post('/user/', validateToken, permissionCheck, async (req, res) => {
 router.delete('/user/', validateToken, permissionCheck, async (req, res) => {
     valid_permissions = ['admin']
     if(!req.permissions.some(p => valid_permissions.includes(p))) 
-        return res.status(403).send('Forbidden access - lacking permission to perform action');
+        return res.status(401).send('No tienes permiso para realizar esta acción.');
 
     // Validation
     const userExists = await User.findOne({_id: req.query.id});
@@ -223,6 +231,47 @@ router.delete('/user/', validateToken, permissionCheck, async (req, res) => {
     });
 });
 
+
+
+router.get('/externalpermissions', validateToken, permissionCheck, async (req, res) => {
+    try{
+        user = await User.findOne({_id: req.query.user});
+        var perms = user.externalPermissions ? user.externalPermissions : []
+        res.json(perms.filter(p => p.user == req.verified.userid));
+    }catch(err){
+        res.json({message: err});
+    }
+});
+
+router.post('/externalpermissions', validateToken, permissionCheck, async (req, res) => {
+    try{
+        user = await User.findOne({_id: req.query.user});
+        var perms = user.externalPermissions ? user.externalPermissions : []
+
+        if(perms.filter(p => p.user == req.verified.userid).length > 0){
+            for(let i = 0; i < perms.length; i ++){
+                if (perms[i].user == req.verified.userid){
+                    perms[i].permissions = req.body.permissions
+                    break;
+                }
+            }
+        }else{
+            perms.push({user: req.verified.userid, permissions: req.body.permissions})
+        }
+
+        user.externalPermissions = [...perms];
+        User.findByIdAndUpdate(req.query.user, user, (err, model) => {
+            if(err){
+                res.status(400).send(err)
+            }
+            else{
+                res.send({})
+            }
+        });
+    }catch(err){
+        res.json({message: err});
+    }
+});
 
 
 // Create a test user

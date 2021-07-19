@@ -28,9 +28,9 @@ const Parametro = require('../models/Parametro.js');
 // Update a propiedad
 router.post('/propiedades/', validateToken, permissionCheck, updateCleaner, async (req, res) =>{
     // Check if logged user has the permissions
-    valid_permissions = ['admin', 'update-all', 'update-propiedad']
+    valid_permissions = ['admin', 'update-all', 'update-propiedad', 'propiedades']
     if(!req.permissions.some(p => valid_permissions.includes(p))) 
-        return res.status(403).send('Forbidden access - lacking permission to perform action');
+        return res.status(401).send('No tienes permiso para realizar esta acción.');
 
     // Validation
     const validation = propiedadValidationSchema.validate(req.body);
@@ -53,9 +53,9 @@ router.post('/propiedades/', validateToken, permissionCheck, updateCleaner, asyn
 // Update a persona
 router.post('/personas/', validateToken, permissionCheck, updateCleaner, async (req, res) =>{
     // Check if logged user has the permissions
-    valid_permissions = ['admin', 'update-all', 'update-persona']
+    valid_permissions = ['admin', 'update-all', 'update-persona', 'personas']
     if(!req.permissions.some(p => valid_permissions.includes(p))) 
-        return res.status(403).send('Forbidden access - lacking permission to perform action');
+        return res.status(401).send('No tienes permiso para realizar esta acción.');
 
     // Validation
     const validation = personaValidationSchema.validate(req.body);
@@ -79,9 +79,9 @@ router.post('/personas/', validateToken, permissionCheck, updateCleaner, async (
 // Update a direccion
 router.post('/direcciones/', validateToken, permissionCheck, updateCleaner, async (req, res) =>{
     // Check if logged user has the permissions
-    valid_permissions = ['admin', 'update-all', 'update-direccion']
+    valid_permissions = ['admin', 'update-all', 'update-direccion', 'propiedades']
     if(!req.permissions.some(p => valid_permissions.includes(p))) 
-        return res.status(403).send('Forbidden access - lacking permission to perform action');
+        return res.status(401).send('No tienes permiso para realizar esta acción.');
 
     // Validation
     const validation = direccionValidationSchema.validate(req.body);
@@ -107,7 +107,7 @@ router.post('/parametros/', validateToken, permissionCheck, updateCleaner, async
     // Check if logged user has the permissions
     valid_permissions = ['admin', 'update-all', 'update-parametro']
     if(!req.permissions.some(p => valid_permissions.includes(p))) 
-        return res.status(403).send('Forbidden access - lacking permission to perform action');
+        return res.status(401).send('No tienes permiso para realizar esta acción.');
 
     // Check if direccion exists
     const parametro = await Parametro.findOne({concept: req.query.concept});
@@ -126,9 +126,9 @@ router.post('/parametros/', validateToken, permissionCheck, updateCleaner, async
 // Update a mandato
 router.post('/mandatos/', validateToken, permissionCheck, updateCleaner, async (req, res) =>{
     // Check if logged user has the permissions
-    valid_permissions = ['admin', 'update-all', 'update-mandato']
+    valid_permissions = ['admin', 'update-all', 'update-mandato', 'mandatos']
     if(!req.permissions.some(p => valid_permissions.includes(p))) 
-        return res.status(403).send('Forbidden access - lacking permission to perform action');
+        return res.status(401).send('No tienes permiso para realizar esta acción.');
 
     // Validation
     const validation = mandatoValidationSchema.validate(req.body);
@@ -152,9 +152,9 @@ router.post('/mandatos/', validateToken, permissionCheck, updateCleaner, async (
 // Update a userparam
 router.post('/userparam/', validateToken, permissionCheck, updateCleaner, async (req, res) =>{
     // Check if logged user has the permissions
-    valid_permissions = ['admin', 'update-all', 'update-parametro']
+    valid_permissions = ['admin', 'update-all', 'update-parametro', 'parametros']
     if(!req.permissions.some(p => valid_permissions.includes(p))) 
-        return res.status(403).send('Forbidden access - lacking permission to perform action');
+        return res.status(401).send('No tienes permiso para realizar esta acción.');
 
     // Check if direccion exists
     const parametro = await Parametro.findOne({_id: req.query.id});
@@ -174,9 +174,9 @@ router.post('/userparam/', validateToken, permissionCheck, updateCleaner, async 
 // Update a contrato
 router.post('/contratos/', validateToken, permissionCheck, updateCleaner, async (req, res) =>{
     // Check if logged user has the permissions
-    valid_permissions = ['admin', 'update-all', 'update-contrato']
+    valid_permissions = ['admin', 'update-all', 'update-contrato', 'contratos']
     if(!req.permissions.some(p => valid_permissions.includes(p))) 
-        return res.status(403).send('Forbidden access - lacking permission to perform action');
+        return res.status(401).send('No tienes permiso para realizar esta acción.');
     
     // Validation
     const validation = contratoValidationSchema.validate(req.body);
@@ -200,9 +200,9 @@ router.post('/contratos/', validateToken, permissionCheck, updateCleaner, async 
 // Update a contrato
 router.post('/closecontrato/', validateToken, permissionCheck, updateCleaner, async (req, res) =>{
     // Check if logged user has the permissions
-    valid_permissions = ['admin', 'update-all', 'update-contrato']
+    valid_permissions = ['admin', 'update-all', 'update-contrato', 'contratos']
     if(!req.permissions.some(p => valid_permissions.includes(p))) 
-        return res.status(403).send('Forbidden access - lacking permission to perform action');
+        return res.status(401).send('No tienes permiso para realizar esta acción.');
 
     // Check if direccion exists
     const contrato = await Contrato.findOne({_id: req.query.id});
@@ -227,9 +227,9 @@ router.post('/closecontrato/', validateToken, permissionCheck, updateCleaner, as
 // Update a boleta
 router.post('/boletas/', validateToken, permissionCheck, updateCleaner, async (req, res) =>{
     // Check if logged user has the permissions
-    valid_permissions = ['admin', 'update-all', 'update-contrato']
+    valid_permissions = ['admin', 'update-all', 'update-contrato', 'cierresmes']
     if(!req.permissions.some(p => valid_permissions.includes(p))) 
-        return res.status(403).send('Forbidden access - lacking permission to perform action');
+        return res.status(401).send('No tienes permiso para realizar esta acción.');
 
 
     // Check if direccion exists

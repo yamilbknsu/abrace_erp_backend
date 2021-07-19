@@ -44,6 +44,11 @@ const PersonaSchema = mongoose.Schema({
     telefonos: [String],
     emails: [String],
     personalidad: String,
+    ismandante: {
+        type: Boolean,
+        required: true,
+        default: true
+    },
     representante: {type: {
         rut : {
             type: String,

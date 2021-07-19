@@ -81,6 +81,7 @@ const personaValidationSchema = Joi.object().keys({
     telefonos: Joi.array().items(String),
     emails: Joi.array().items(String),
     personalidad: Joi.string().allow('').allow(null),
+    ismandante: Joi.bool().default(true),
     representante: Joi.object().allow(null)
 });
 
@@ -163,7 +164,7 @@ const contratoValidationSchema = Joi.object().keys({
     banco: Joi.string().allow(''),
     nrodcto: Joi.string().allow(''),
     arrendatario: Joi.string().required(),
-    aval: Joi.string(),
+    aval: Joi.string().allow(''),
     instrucciones: Joi.array().items(Joi.object().keys({
         nombre: Joi.string(),
         detalle: Joi.string().allow(''),
