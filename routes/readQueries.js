@@ -920,7 +920,8 @@ router.get('/saldoanteriorpago/', validateToken, permissionCheck, async (req, re
         ]);
         
         if(pagos[0] && pagos[0].saldoanterior != undefined)
-            res.json(pagos.map(pago => pago.subtotal + pago.saldoanterior - pago.pagado));
+            //res.json(pagos.map(pago => pago.subtotal + pago.saldoanterior - pago.pagado));
+            res.json(pagos.map(pago => pago.subtotal - pago.pagado));
         else
             res.json([0])
     }catch(err){
